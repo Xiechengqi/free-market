@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{ site.language | default('zh-CN') }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ site.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="Keywords" content="{% if site.keywords %}{{ site.keywords }}{% else %}{{ site.name }}{% endif %}">
+    <meta name="Description" content="{% if site.description %}{{ site.description }}{% else %}{{ site.notice }}{% endif %}">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/assets/hyper/css/vendor/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css">
+    <link href="/assets/hyper/css/icons.min.css" rel="stylesheet" type="text/css">
+    <link href="/assets/hyper/css/app-creative.min.css" rel="stylesheet" type="text/css" id="light-style">
+    <link href="/assets/hyper/css/hyper.css?v=045256" rel="stylesheet" type="text/css">
+</head>
+<body data-layout="topnav">
+<div class="wrapper"><div class="content-page"><div class="content">
+<div class="header-navbar"><div class="container header-flex"><a href="/" class="topnav-logo" style="float:none;"><img src="/assets/common/images/default.jpg" height="36"><div class="logo-title">{{ site.logo_text }}</div></a><a class="btn btn-outline-primary" href="/order-search"><i class="noti-icon uil-file-search-alt search-icon"></i> 查询订单</a></div></div>
+<div class="container">
+<div class="row"><div class="col-12"><div class="page-title-box"><div class="page-title-right"><div class="app-search"><div class="position-relative"><input type="text" class="form-control" id="search" placeholder="搜索商品"><span class="uil-search"></span></div></div></div><h4 class="page-title"><button type="button" class="btn btn-outline-primary ml-1" id="notice-open"><i class="uil-comment-alt-notes me-1"></i> 公告</button></h4></div></div></div>
+<div class="nav nav-list">
+    <a href="#group-all" class="tab-link active" data-bs-toggle="tab" data-toggle="tab"><span class="tab-title">全部</span><div class="img-checkmark"><img src="/assets/hyper/images/check.png"></div></a>
+    {% for category in data.categories %}
+    <a href="#group-{{ category.id }}" class="tab-link" data-bs-toggle="tab" data-toggle="tab"><span class="tab-title">{{ category.name }}</span><div class="img-checkmark"><img src="/assets/hyper/images/check.png"></div></a>
+    {% endfor %}
+</div>
+<div class="tab-content">
+    <div class="tab-pane active" id="group-all"><div class="hyper-wrapper">
+        {% for category in data.categories %}{% for product in category.products %}
+        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0);{% endif %}" class="home-card category {% if product.stock <= 0 %}ribbon-box{% endif %}">
+            {% if product.stock <= 0 %}<div class="ribbon-two ribbon-two-danger"><span>缺货</span></div>{% endif %}
+            <img class="home-img" src="/assets/hyper/images/loading.gif" data-src="{{ product.image_url }}">
+            <div class="flex"><p class="name">{{ product.name }}</p><div class="price">￥<b>{{ product.price_display }}</b></div></div>
+        </a>
+        {% endfor %}{% endfor %}
+    </div></div>
+    {% for category in data.categories %}
+    <div class="tab-pane" id="group-{{ category.id }}"><div class="hyper-wrapper">
+        {% for product in category.products %}
+        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0);{% endif %}" class="home-card category {% if product.stock <= 0 %}ribbon-box{% endif %}">
+            {% if product.stock <= 0 %}<div class="ribbon-two ribbon-two-danger"><span>缺货</span></div>{% endif %}
+            <img class="home-img" src="/assets/hyper/images/loading.gif" data-src="{{ product.image_url }}">
+            <div class="flex"><p class="name">{{ product.name }}</p><div class="price">￥<b>{{ product.price_display }}</b></div></div>
+        </a>
+        {% endfor %}
+    </div></div>
+    {% endfor %}
+</div>
+<div class="modal fade" id="notice-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">公告</h5><button type="button" class="close" data-dismiss="modal">×</button></div><div class="modal-body">{{ site.notice | safe }}</div></div></div></div>
+</div></div>
+<footer class="hyper-footer"><div class="container"><div class="row"><div class="col-md-6"><div class="footer-links">Powered by <a href="https://github.com/assimon/dujiaoka">@独角数卡.</a></div></div><div class="col-md-6"><div class="text-md-right footer-links d-none d-md-block">{{ site.footer | safe }}</div></div></div></div><div class="back-to-top"><button class="btn btn-primary" id="back-to-top"><i class="dripicons-chevron-up"></i></button></div></footer>
+</div></div>
+<script src="/assets/hyper/js/jquery-3.4.1.min.js"></script><script src="/assets/hyper/js/vendor.min.js"></script><script src="/assets/hyper/js/app.min.js"></script><script src="/assets/hyper/js/hyper.js?v=215115"></script>
+<script>$('#notice-open').click(function(){ $('#notice-modal').modal(); }); $("#search").on("input",function(){ var txt=$("#search").val(); if($.trim(txt)!=""){ $(".category").hide().filter(":contains('"+txt+"')").show(); } else { $(".category").show(); } });</script>
+</body></html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>订单查询结果 - {{ site.name }}</title><link rel="stylesheet" href="/assets/luna/layui/css/layui.css"><link rel="stylesheet" href="/assets/luna/main.css"></head>
+<body><div class="background"></div>
+<div class="main"><div class="layui-row"><div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12"><div class="main-box">
+  <div class="title">订单查询结果</div>
+  <div style="padding:20px">
+    {% if data.orders %}
+      {% for item in data.orders %}
+      <div style="border-bottom:1px solid #eee;padding:12px 0">
+        <p>订单号：<a href="/detail-order-sn/{{ item.order.order_no }}">{{ item.order.order_no }}</a></p>
+        <p>状态：{{ item.order.status }}</p>
+        <p>金额：￥{{ item.amount_display }}</p>
+        <p>邮箱：{{ item.order.guest_email }}</p>
+        {% if item.fulfillment %}
+        <pre style="white-space:pre-wrap;margin-top:10px">{{ item.fulfillment.payload }}</pre>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>没有找到相关订单。</p>
+    {% endif %}
+    <p style="margin-top:20px"><a class="layui-btn" href="/order-search">返回查询</a></p>
+  </div>
+</div></div></div></div>
+</body></html>

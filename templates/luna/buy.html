@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ data.product.name }} - {{ site.name }}</title>
+  <meta name="keywords" content="{{ data.product.name }}{% if site.keywords %},{{ site.keywords }}{% endif %}">
+  <meta name="description" content="{% if data.product.short_description %}{{ data.product.short_description }}{% else %}{{ site.description }}{% endif %}">
+  <link rel="stylesheet" href="/assets/luna/layui/css/layui.css">
+  <link rel="stylesheet" href="/assets/luna/main.css">
+</head>
+<body>
+<div class="background"></div>
+<div class="header">
+  <div class="layui-row">
+    <div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12">
+      <div class="header-box">
+        <a href="/">
+          <img src="/assets/common/images/default.jpg" alt="">
+          <div class="info">{{ site.logo_text }}</div>
+        </a>
+        <div class="query layui-hide-xs">
+          <a href="/order-search">
+            <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20">
+              <path d="M965.6 447.2 752 447.2c-14.4 0-26.4-12-26.4-26.4 0-14.4 12-26.4 26.4-26.4l213.6 0c14.4 0 26.4 12 26.4 26.4C992.8 435.2 980.8 447.2 965.6 447.2zM965.6 233.6 699.2 233.6c-14.4 0-26.4-12-26.4-26.4 0-14.4 12-26.4 26.4-26.4l267.2 0c14.4 0 26.4 12 26.4 26.4C992.8 221.6 980.8 233.6 965.6 233.6zM606.4 623.2l156.8 156.8c21.6 21.6 21.6 56.8 0 78.4-21.6 21.6-56.8 21.6-78.4 0L528 701.6c-16-16-20-39.2-12-59.2-51.2 44-117.6 72-190.4 72-162.4 0-293.6-131.2-293.6-293.6s131.2-293.6 293.6-293.6 293.6 131.2 293.6 293.6c0 72.8-28 139.2-72 190.4C567.2 603.2 590.4 607.2 606.4 623.2zM324.8 233.6c-103.2 0-187.2 84-187.2 187.2s84 187.2 187.2 187.2S512 523.2 512 420 428 233.6 324.8 233.6zM805.6 607.2l160 0c14.4 0 26.4 12 26.4 26.4 0 14.4-12 26.4-26.4 26.4l-160 0c-14.4 0-26.4-12-26.4-26.4C779.2 619.2 791.2 607.2 805.6 607.2z" fill="#ffffff"></path>
+            </svg>
+            <span>订单查询</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main layui-hide-xs">
+  <div class="layui-row">
+    <div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12">
+      <div class="main-box">
+        <div class="title"><p class="tit">公告:</p></div>
+        <div class="goods"><div class="tips">{{ site.notice | safe }}</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="layui-row">
+    <div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12">
+      <div class="main-box">
+        <div class="title" style="border-bottom: 1px solid #f7f7f7;padding-bottom: 5px">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20">
+            <path d="M904.192 908.288H119.808l-40.96-45.056 81.92-711.68 40.96-35.84h142.336v81.92H237.568l-71.68 628.736h692.224l-71.68-628.736H680.96v-81.92h141.312l40.96 35.84 81.92 711.68z" fill="#3C8CE7"></path>
+            <path d="M516.096 422.912c-104.448 0-151.552-73.728-161.792-112.64l59.392-15.36c2.048 7.168 20.48 66.56 102.4 66.56 78.848 0 91.136-57.344 92.16-63.488l60.416 10.24c-5.12 38.912-46.08 114.688-152.576 114.688z" fill="#00EAFF"></path>
+          </svg>
+          <span>商品详情</span>
+        </div>
+
+        <div class="layui-col-md4 layui-col-sm12">
+          <div class="goods-img">
+            <img class="viewer-pictures" src="{{ data.product.image_url }}" data-original="{{ data.product.image_url }}" alt="">
+          </div>
+        </div>
+
+        <form class="layui-form layui-form-pane" action="/create-order?_csrf={{ csrf }}" method="post">
+          <input type="hidden" name="gid" value="{{ data.product.id }}">
+          <div class="layui-col-md8 layui-col-sm12">
+            <div class="goods-msg">
+              <div class="goods-name">
+                <svg style="vertical-align: middle;" class="icon" viewBox="0 0 1024 1024" width="25" height="25">
+                  <path d="M727.04 750.592h-68.608v-81.92H686.08V249.856L512 99.328 337.92 253.952v414.72h28.672v81.92H296.96l-40.96-40.96V235.52l13.312-30.72 215.04-190.464h54.272l215.04 186.368 14.336 30.72v478.208z" fill="#3C8CE7"></path>
+                  <path d="M512 465.92m-67.584 0a67.584 67.584 0 1 0 135.168 0 67.584 67.584 0 1 0-135.168 0Z" fill="#3C8CE7"></path>
+                  <path d="M479.232 660.48h58.368v233.472h-58.368zM391.168 723.968h58.368v157.696h-58.368zM461.824 922.624h58.368v88.064h-58.368zM574.464 748.544h58.368v188.416h-58.368z" fill="#00EAFF"></path>
+                </svg>
+                <span>
+                  {{ data.product.name }}
+                  <span class="small-tips {{ data.product.fulfillment_tip_class }}">{{ data.product.fulfillment_label }}</span>
+                  <span class="small-tips tips-blue">库存({{ data.product.stock }})</span>
+                  {% if data.product.buy_limit_num > 0 %}
+                    <span class="small-tips tips-red">每单限({{ data.product.buy_limit_num }})</span>
+                  {% endif %}
+                </span>
+              </div>
+
+              <div class="price">
+                <span class="price-sign">￥</span>
+                <span class="price-num">{{ data.product.price_display }}</span>
+                {% if data.product.show_retail_price %}
+                  <span class="price-c">[<del>￥{{ data.product.retail_price_display }}</del>]</span>
+                {% endif %}
+              </div>
+              {% if data.product.wholesale_tiers %}
+              <div class="entry">
+                <span class="l-msg">批&nbsp;&nbsp;发&nbsp;&nbsp;价：</span>
+                <label class="input" style="height:auto;line-height:26px;padding:8px 12px">
+                  {% for tier in data.product.wholesale_tiers %}
+                    <span class="small-tips tips-green">满{{ tier.quantity }}件 {{ tier.unit_price_display }}/件</span>
+                  {% endfor %}
+                </label>
+              </div>
+              {% endif %}
+
+              <div class="entry notSelection">
+                <span class="l-msg">购买数量：</span>
+                <label class="input">
+                  <span class="sub">
+                    <svg class="icon" viewBox="0 0 1025 1024" width="25" height="25"><path d="M874.971429 149.942857C776.228571 54.857143 648.228571 0 512.914286 0S245.942857 54.857143 150.857143 149.942857c-201.142857 201.142857-201.142857 522.971429 0 724.114286C245.942857 969.142857 377.6 1024 512.914286 1024s266.971429-54.857143 362.057143-149.942857c201.142857-201.142857 201.142857-522.971429 0-724.114286m-51.2 672.914286C739.657143 906.971429 629.942857 950.857143 512.914286 950.857143s-226.742857-43.885714-310.857143-128c-171.885714-171.885714-171.885714-449.828571 0-621.714286C286.171429 117.028571 395.885714 73.142857 512.914286 73.142857s226.742857 43.885714 310.857143 128c171.885714 171.885714 171.885714 449.828571 0 621.714286" fill="#8a8a8a"></path><path d="M772.571429 475.428571H253.257143c-21.942857 0-36.571429 14.628571-36.571429 36.571429 0 10.971429 3.657143 18.285714 10.971429 25.6s14.628571 10.971429 25.6 10.971429H768.914286c21.942857 0 36.571429-14.628571 36.571428-36.571429s-14.628571-36.571429-32.914285-36.571429" fill="#8a8a8a"></path></svg>
+                  </span>
+                  <input class="pay-num" name="by_amount" id="orderNumber" required type="number" value="1">
+                  <span class="add">
+                    <svg class="icon" viewBox="0 0 1025 1024" width="25" height="25"><path d="M874.971429 149.942857C776.228571 54.857143 648.228571 0 512.914286 0S245.942857 54.857143 150.857143 149.942857c-201.142857 201.142857-201.142857 522.971429 0 724.114286C245.942857 969.142857 377.6 1024 512.914286 1024s266.971429-54.857143 362.057143-149.942857c201.142857-201.142857 201.142857-522.971429 0-724.114286m-51.2 672.914286C739.657143 906.971429 629.942857 950.857143 512.914286 950.857143s-226.742857-43.885714-310.857143-128c-171.885714-171.885714-171.885714-449.828571 0-621.714286C286.171429 117.028571 395.885714 73.142857 512.914286 73.142857s226.742857 43.885714 310.857143 128c171.885714 171.885714 171.885714 449.828571 0 621.714286" fill="#8a8a8a"></path><path d="M549.485714 475.428571V288.914286c0-21.942857-14.628571-36.571429-36.571428-36.571429s-36.571429 14.628571-36.571429 36.571429V475.428571H289.828571c-21.942857 0-36.571429 14.628571-36.571428 36.571429 0 10.971429 3.657143 18.285714 10.971428 25.6s14.628571 10.971429 25.6 10.971429H476.342857v186.514285c0 10.971429 3.657143 18.285714 10.971429 25.6 7.314286 7.314286 14.628571 10.971429 25.6 10.971429 21.942857 0 36.571429-14.628571 36.571428-36.571429V548.571429h186.514286c21.942857 0 36.571429-14.628571 36.571429-36.571429s-14.628571-36.571429-36.571429-36.571429H549.485714z" fill="#8a8a8a"></path></svg>
+                  </span>
+                </label>
+              </div>
+
+              <div class="entry">
+                <span class="l-msg">邮&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;箱：</span>
+                <label class="input"><input type="text" name="email" required placeholder="填写你的邮箱"></label>
+              </div>
+              <div class="entry">
+                <span class="l-msg">优&nbsp;&nbsp;惠&nbsp;&nbsp;码：</span>
+                <label class="input"><input type="text" name="coupon_code" placeholder="填写你的优惠码"></label>
+              </div>
+              <div class="entry">
+                <span class="l-msg">查询密码：</span>
+                <label class="input"><input type="text" name="search_pwd" required placeholder="请填写订单的查询密码"></label>
+              </div>
+              {% for field in data.product.manual_fields %}
+              <div class="entry">
+                <span class="l-msg">{{ field.label }}：</span>
+                <label class="input"><input type="text" name="{{ field.field }}" {% if field.required %}required{% endif %} placeholder="请填写{{ field.label }}"></label>
+              </div>
+              {% endfor %}
+              {% if data.captcha_enabled %}
+              <div class="entry">
+                <span class="l-msg">验&nbsp;&nbsp;证&nbsp;&nbsp;码：</span>
+                <label class="input">
+                  <input type="hidden" name="captcha_id" value="{{ data.captcha_id }}">
+                  <input type="text" name="captcha_answer" required placeholder="{{ data.captcha_question }}">
+                </label>
+              </div>
+              {% endif %}
+
+              <div class="pay notSelection">
+                <input type="hidden" name="payway" value="{{ data.default_channel_id }}">
+                {% for way in data.payways %}
+                  <div class="pay-type {% if way.selected %}pay-select{% endif %}" data-type="{{ way.pay_check }}" data-provider="{{ way.provider_type }}" data-channel="{{ way.channel_type }}" data-badge="{{ way.badge }}" data-id="{{ way.id }}" data-name="{{ way.name }}"></div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="layui-col-sm12 buy" style="text-align: center">
+            <button type="submit"><span>下单</span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="layui-row">
+    <div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12">
+      <div class="main-box">
+        <div class="title" style="border-bottom: 1px solid #f7f7f7;padding-bottom: 5px">
+          <svg class="icon" viewBox="0 0 1024 1024" width="20" height="20">
+            <path d="M791.552 1002.496L513.024 875.52l-91.136 45.056-35.84-73.728 107.52-53.248 35.84-1.024L766.976 901.12V242.688H257.024v559.104h-81.92V201.728l40.96-40.96h591.872l40.96 40.96v762.88z" fill="#3C8CE7"></path>
+            <path d="M481.28 21.504h61.44v309.248h-61.44z" fill="#00EAFF"></path>
+          </svg>
+          <span>商品描述</span>
+        </div>
+        <div class="intro">
+          {% if data.product.buy_prompt %}
+            <div class="small-tips tips-blue" style="margin-bottom:12px">{{ data.product.buy_prompt | safe }}</div>
+          {% endif %}
+          {{ data.product.description_html | safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="query-m">
+  <a href="/order-search">
+    <svg class="icon" viewBox="0 0 1024 1024" width="30" height="30">
+      <path d="M320.512 428.032h382.976v61.44H320.512zM320.512 616.448h320.512v61.44H320.512z" fill="#ffffff"></path>
+      <path d="M802.816 937.984H221.184l-40.96-40.96V126.976l40.96-40.96h346.112l26.624 10.24 137.216 117.76 98.304 79.872 15.36 31.744v571.392l-41.984 40.96z m-540.672-81.92h500.736V345.088L677.888 276.48 550.912 167.936H262.144v688.128z" fill="#ffffff"></path>
+    </svg>
+    <span>查单</span>
+  </a>
+</div>
+
+<div class="order-m">
+  <div onclick="window.showQrcode('{{ data.mobile_order_qr_data_url | safe }}')">
+    <svg class="icon" viewBox="0 0 1024 1024" width="35" height="35">
+      <path d="M146.432 336.896h-81.92V106.496l40.96-40.96h231.424v81.92H146.432zM336.896 958.464H105.472l-40.96-40.96V687.104h81.92v189.44h190.464zM956.416 336.896h-81.92V147.456H684.032v-81.92h231.424l40.96 40.96zM915.456 958.464H613.376v-81.92h261.12V659.456h81.92v258.048z" fill="#ffffff"></path>
+      <path d="M10.24 473.088h1003.52v61.44H10.24z" fill="#ffffff"></path>
+    </svg>
+    <span>手机下单</span>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="layui-row">
+    <div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12">
+      <div style="text-align: center">{{ site.footer | safe }}</div>
+      <p>Powered by <a href="https://github.com/assimon/dujiaoka" target="_blank">@独角数卡.DJK</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let stock = {{ data.product.stock }}, limitNum = {{ data.product.buy_limit_num }};
+  let tipsMsg = {
+    least_one: '购买数量不能低于1件',
+    exceeds: '购买数量不能多于库存数量',
+    exceeds_limit: '购买数量不能多于限购数量',
+    mobile_order: '扫描二维码 手机下单'
+  };
+</script>
+<script src="/assets/luna/layui/layui.js"></script>
+<script src="/assets/luna/js/jquery-3.4.1.min.js"></script>
+<script src="/assets/luna/main.js"></script>
+<script src="/assets/luna/layui/lay/modules/layer.js"></script>
+</body>
+</html>

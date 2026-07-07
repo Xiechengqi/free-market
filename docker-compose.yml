@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    image: dujiao-rust:latest
+    restart: unless-stopped
+    # Expose plain HTTP — terminate TLS at Cloudflare (orange-cloud proxy or
+    # cloudflared tunnel). Cloudflare sends X-Forwarded-Proto: https and
+    # X-Forwarded-For; the app handles both via trust_proxy_hops + cookie auto-secure.
+    ports:
+      - "8080:8080"
+    environment:
+      DUJIAO_CONFIG: /app/config.toml
+      RUST_LOG: "dujiao_rust=info,tower_http=info"
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "/app/dujiao-rust", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

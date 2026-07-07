@@ -1,0 +1,133 @@
+# ISSUES
+
+Last reviewed: 2026-06-17
+
+This file records issues found during codebase reviews. Some implementation work
+has been applied after the initial survey; keep each item status current instead
+of assuming this file is a pure pre-fix backlog.
+
+## 1. Admin dashboard "today orders" field mismatch
+
+Status: confirmed
+Severity: low
+
+The backend dashboard API returns `today_order_count`, but the admin homepage
+component reads `today_orders`. As a result, the "今日订单" card can render an
+empty/undefined value even when today's order count exists.
+
+References:
+
+- `src/services/admin_service.rs`: `DashboardData.today_order_count`
+- `src/services/admin_service.rs`: `dashboard()` response construction
+- `web-admin/src/views/home/index.vue`: `DashboardData.today_orders`
+- `web-admin/src/views/home/index.vue`: dashboard cards use key `today_orders`
+
+Observed during review:
+
+- Backend field: `today_order_count`
+- Frontend field: `today_orders`
+
+## 2. Admin frontend typecheck fails: BetterScroll type import
+
+Status: confirmed
+Severity: medium
+
+`pnpm -C web-admin typecheck` fails because `@better-scroll/core` does not export
+the named type `BScrollConstructor` in the currently installed package version.
+
+Command:
+
+```sh
+pnpm -C web-admin typecheck
+```
+
+Error:
+
+```text
+src/components/custom/better-scroll.vue(4,15): error TS2614: Module '"@better-scroll/core"' has no exported member 'BScrollConstructor'. Did you mean to use 'import BScrollConstructor from "@better-scroll/core"' instead?
+```
+
+Reference:
+
+- `web-admin/src/components/custom/better-scroll.vue`
+
+## 3. Admin frontend typecheck fails: Naive UI select option type mismatch
+
+Status: confirmed
+Severity: medium
+
+`pnpm -C web-admin typecheck` also fails because values typed as `SelectOption[]`
+are passed to `NSelect` where Vue/Naive UI expects `SelectMixedOption[]`.
+
+Command:
+
+```sh
+pnpm -C web-admin typecheck
+```
+
+Errors:
+
+```text
+src/views/payment-channels/components/channel-form.vue(364,12): error TS2322: Type 'SelectOption[]' is not assignable to type 'SelectMixedOption[]'.
+src/views/payment-channels/components/field-renderer.vue(85,6): error TS2322: Type 'SelectOption[]' is not assignable to type 'SelectMixedOption[]'.
+src/views/payment-channels/components/field-renderer.vue(92,6): error TS2322: Type 'SelectOption[]' is not assignable to type 'SelectMixedOption[]'.
+```
+
+References:
+
+- `web-admin/src/views/payment-channels/components/channel-form.vue`
+- `web-admin/src/views/payment-channels/components/field-renderer.vue`
+- `web-admin/src/views/payment-channels/method-specs.ts`
+
+## 4. EVM local payment lacks live Alchemy regression coverage
+
+Status: confirmed
+Severity: medium
+
+The built-in `evm-local` payment path is covered by Rust unit tests for amount
+calculation and by compile-time checks, but it has not been verified against a
+real Alchemy API key and real ERC20 transfers. The implementation now uses
+Alchemy JSON-RPC `eth_getLogs`; production verification still needs at least one
+real BNB Smart Chain USDT/USDC payment and one mismatch/expired-payment case.
+It also needs a same-amount multi-address concurrency check, an overpay-tolerance
+check when enabled, and a manual `tx_hash` confirmation check. Alchemy free-tier
+limits vary by chain and method, so `log_scan_block_range` and watcher frequency
+should be checked against the active Alchemy plan before production use.
+
+References:
+
+- `src/services/evm_local_service.rs`
+- `migrations/0012_evm_local_payments.sql`
+- `docs/README.md`: EVM 本地收款
+
+## Verification Notes
+
+Rust tests passed:
+
+```sh
+cargo test
+```
+
+Observed result:
+
+```text
+14 unit tests passed
+6 order-flow integration tests passed
+```
+
+Covered order-flow scenarios include:
+
+- canceling an unpaid order releases reserved cards
+- coupon refund accounting is idempotent
+- concurrent buyers do not oversell available cards
+- loop cards reject purchases with quantity greater than 1
+- payment amount mismatch is rejected
+- repeated successful callbacks are idempotent
+
+Admin frontend typecheck failed:
+
+```sh
+pnpm -C web-admin typecheck
+```
+
+The failing items are recorded above as issues 2 and 3.

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="{{ site.language | default('zh-CN') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site.name }}</title>
+    <meta name="Keywords" content="{% if site.keywords %}{{ site.keywords }}{% else %}{{ site.name }}{% endif %}">
+    <meta name="Description" content="{% if site.description %}{{ site.description }}{% else %}{{ site.notice }}{% endif %}">
+    <link rel="stylesheet" href="/assets/unicorn/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/unicorn/css/base.css">
+    <link rel="stylesheet" href="/assets/unicorn/css/common.css">
+    <link rel="stylesheet" href="/assets/unicorn/css/index.css">
+</head>
+<body>
+<header class="header sticky-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="header-left clearfix">
+                    <div class="logo text-center d-none d-md-block">
+                        <a href="/"><img src="/assets/common/images/default.jpg" alt="Logo"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="header-right clearfix">
+                    <nav class="navbar navbar-expand-lg navbar-light">
+                        <div class="container-fluid">
+                            <a class="navbar-brand" href="/">{{ site.logo_text }}</a>
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="collapse navbar-collapse" id="navbarColor">
+                                <ul class="navbar-nav me-auto">
+                                    <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="/order-search">订单查询</a></li>
+                                </ul>
+                                <form class="d-flex">
+                                    <input class="form-control form-control-sm me-sm-2" id="searchText" type="text" placeholder="搜索商品名称">
+                                    <button class="btn btn-secondary my-2 my-sm-0" type="button" id="searchBtn">搜索</button>
+                                </form>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="notice">
+    <div class="container">
+        <div class="row"><div class="col-12">
+            <div class="card mt-3"><div class="card-body">
+                <div class="jumbotron jumbotron-fluid p-1"><div class="container">
+                    <h4>站点公告：</h4>
+                    <p class="lead">{{ site.notice | safe }}</p>
+                </div></div>
+            </div></div>
+        </div></div>
+    </div>
+</div>
+<section class="main-container">
+    <div class="category">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="text-center"><span>今天需要点什么？</span></h3>
+                    <div class="separator"></div>
+                    <p class="lead text-center"><span>选择分类并下单，支付完成后自动发货。</span></p>
+                </div>
+                <div class="col-md-12">
+                    <div class="category-menus">
+                        <ul class="nav nav-pills justify-content-center">
+                            <li class="nav-item"><a href="#group-all" data-bs-toggle="tab" class="btn btn-outline-secondary active">全部</a></li>
+                            {% for category in data.categories %}
+                            <li class="nav-item"><a href="#group-{{ category.id }}" data-bs-toggle="tab" class="btn btn-outline-secondary">{{ category.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="goods">
+        <div class="container">
+            <div class="goods-list mb-5">
+                <div id="goodsTabContent" class="tab-content">
+                    <div class="tab-pane fade active show" id="group-all">
+                        <div class="row row-cols-2 row-cols-md-5 g-4">
+                            {% for category in data.categories %}
+                            {% for product in category.products %}
+                            <div class="col">
+                                <div class="card position-relative">
+                                    {% if product.fulfillment_type == "auto" %}
+                                    <span class="badge bg-success position-absolute top-0 start-0">自动发货</span>
+                                    {% else %}
+                                    <span class="badge bg-warning position-absolute top-0 start-0">人工处理</span>
+                                    {% endif %}
+                                    <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate">{{ product.name }}</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-success"><strong>{{ product.price_display }}</strong></button>
+                                        <h6 class="mt-2"><small class="text-muted">库存：{{ product.stock }}</small></h6>
+                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">立即购买</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% for category in data.categories %}
+                    <div class="tab-pane fade" id="group-{{ category.id }}">
+                        <div class="row row-cols-2 row-cols-md-5 g-4">
+                            {% for product in category.products %}
+                            <div class="col">
+                                <div class="card position-relative">
+                                    {% if product.fulfillment_type == "auto" %}
+                                    <span class="badge bg-success position-absolute top-0 start-0">自动发货</span>
+                                    {% else %}
+                                    <span class="badge bg-warning position-absolute top-0 start-0">人工处理</span>
+                                    {% endif %}
+                                    <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate">{{ product.name }}</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-success"><strong>{{ product.price_display }}</strong></button>
+                                        <h6 class="mt-2"><small class="text-muted">库存：{{ product.stock }}</small></h6>
+                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">立即购买</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<footer class="footer p-3">
+    <div class="row"><div class="col-12 text-center">
+        <div class="author">Powered by：<a href="http://dujiaoka.com">@独角数卡</a></div>
+        <div class="custom">{{ site.footer | safe }}</div>
+    </div></div>
+</footer>
+<script src="/assets/unicorn/js/jquery-3.6.0.min.js"></script>
+<script src="/assets/unicorn/js/bootstrap.min.js"></script>
+<script>
+    $("#searchBtn").on("click", function(){
+        var searchContent = $("#searchText").val();
+        if ($.trim(searchContent) !== "") {
+            $(".col").hide().filter(":contains('" + searchContent + "')").show();
+        } else {
+            $(".col").show();
+        }
+    });
+</script>
+</body>
+</html>

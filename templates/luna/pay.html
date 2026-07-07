@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>支付 - {{ site.name }}</title><link rel="stylesheet" href="/assets/luna/layui/css/layui.css"><link rel="stylesheet" href="/assets/luna/main.css"></head>
+<body><div class="background"></div>
+<div class="main"><div class="layui-row"><div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12"><div class="main-box">
+  <div class="title">支付订单</div>
+  <div style="padding:20px">
+    <p>订单号：{{ data.order_no }}</p>
+    <p>支付号：{{ data.payment_no }}</p>
+    <p>金额：￥{{ data.amount_display }}</p>
+    {% if data.qr_code %}
+    <div style="margin-top:20px">
+      <p>请使用对应钱包或支付 App 扫码/复制以下内容完成支付：</p>
+      <pre style="white-space:pre-wrap;background:#f7f7f7;padding:12px;border-radius:6px">{{ data.qr_code }}</pre>
+      {% if data.pay_url %}<p><a class="layui-btn" href="{{ data.pay_url }}">打开支付页</a></p>{% endif %}
+      <p class="layui-font-gray">支付完成后可刷新或通过订单详情查看状态。</p>
+    </div>
+    {% else %}
+    <p style="margin-top:20px"><a class="layui-btn" href="{{ data.pay_url }}">{% if data.interaction_mode == "qrcode" %}打开支付页{% else %}去支付{% endif %}</a></p>
+    {% endif %}
+  </div>
+</div></div></div></div>
+</body></html>

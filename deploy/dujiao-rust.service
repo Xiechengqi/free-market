@@ -1,0 +1,35 @@
+[Unit]
+Description=Dujiao Rust (single-binary order/card system)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dujiao
+Group=dujiao
+WorkingDirectory=/opt/dujiao-rust
+Environment=DUJIAO_CONFIG=/opt/dujiao-rust/config.toml
+ExecStart=/opt/dujiao-rust/dujiao-rust
+Restart=on-failure
+RestartSec=3s
+# Graceful shutdown — process traps SIGTERM and drains the SQLite pool.
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=20s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/dujiao-rust/data /opt/dujiao-rust/uploads /opt/dujiao-rust/logs
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

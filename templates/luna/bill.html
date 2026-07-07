@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>订单结算 - {{ site.name }}</title><link rel="stylesheet" href="/assets/luna/layui/css/layui.css"><link rel="stylesheet" href="/assets/luna/main.css"></head>
+<body><div class="background"></div>
+<div class="main"><div class="layui-row"><div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12"><div class="main-box">
+  <div class="title">订单结算</div>
+  <div style="padding:20px">
+    <p>订单号：{{ data.order.order_no }}</p>
+    <p>状态：{{ data.order.status }}</p>
+    <p>原价：￥{{ data.original_amount_display }}</p>
+    {% if data.order.wholesale_discount_cents > 0 %}
+    <p>批发优惠：-￥{{ data.wholesale_discount_display }}</p>
+    {% endif %}
+    {% if data.order.coupon_discount_cents > 0 %}
+    <p>优惠码优惠：-￥{{ data.coupon_discount_display }}</p>
+    {% endif %}
+    <p>金额：￥{{ data.amount_display }}</p>
+    <p>邮箱：{{ data.order.guest_email }}</p>
+    <p style="margin-top:20px"><a class="layui-btn" href="/pay-gateway/noop/{{ data.channel_id }}/{{ data.order.order_no }}">去支付</a></p>
+    <p><a href="/detail-order-sn/{{ data.order.order_no }}">查看订单详情</a></p>
+  </div>
+</div></div></div></div>
+</body></html>

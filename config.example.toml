@@ -1,0 +1,28 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[database]
+# All derived paths (uploads/, backups/, app.secret) sit next to this file.
+# Default if omitted: $HOME/.dujiao/dujiao.db
+path = "/root/.dujiao/dujiao.db"
+
+[site]
+name = "独角数卡"
+logo_text = "Dujiao Rust"
+notice = "欢迎使用 Dujiao Rust。"
+footer = ""
+base_url = "http://0.0.0.0:8080"
+theme = "luna"
+order_expire_minutes = 5
+
+[admin]
+route_prefix = "/admin"
+bootstrap_username = "admin"
+# Change this before first run — the binary refuses to auto-seed an admin
+# while bootstrap_password is the well-known default "admin123456".
+bootstrap_password = "admin123456"
+# Stable secret used to encrypt SMTP/notification keys at rest and sign JWTs.
+# Generate once with `openssl rand -hex 32`. Empty = use DUJIAO_APP_SECRET env
+# var, or a deterministic fallback derived from username + base_url.
+app_secret = ""
