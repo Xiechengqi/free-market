@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BScroll from '@better-scroll/core';
-import type { BScrollConstructor, Options } from '@better-scroll/core';
+import type { Options } from '@better-scroll/core';
+
+type BScrollInstance = InstanceType<typeof BScroll>;
 
 defineOptions({ name: 'BetterScroll' });
 
@@ -18,12 +20,12 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const wrapperRef = ref<HTMLElement | null>(null);
-const instance = ref<BScrollConstructor | null>(null);
+const instance = ref<BScrollInstance | null>(null);
 
 async function init() {
   if (!wrapperRef.value) return;
   await nextTick();
-  instance.value = new BScroll(wrapperRef.value, props.options) as BScrollConstructor;
+  instance.value = new BScroll(wrapperRef.value, props.options);
 }
 
 async function refresh() {

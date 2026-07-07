@@ -283,7 +283,10 @@ function applyMethodDefaults(spec: MethodSpec, alsoChannel: boolean) {
   if (alsoChannel) {
     const w = spec.channelType;
     if (w.kind === 'locked') meta.channelType = w.value;
-    else if (w.kind === 'select') meta.channelType = w.default ?? w.options[0]?.value ?? '';
+    else if (w.kind === 'select') {
+      const first = w.options[0]?.value;
+      meta.channelType = w.default ?? (typeof first === 'string' ? first : '');
+    }
     else meta.channelType = w.default ?? '';
   }
   if (spec.payCheckDefault) meta.pay_check = spec.payCheckDefault;

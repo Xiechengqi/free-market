@@ -1,7 +1,12 @@
 use minijinja::{Environment, context};
 use serde::Serialize;
+use std::cell::RefCell;
 
-use crate::{config::SiteConfig, error::AppError};
+use crate::{config::SiteConfig, error::AppError, services::i18n_service};
+
+thread_local! {
+    static RENDER_LOCALE: RefCell<String> = const { RefCell::new(String::new()) };
+}
 
 pub struct ViewRenderer {
     env: Environment<'static>,
@@ -101,6 +106,9 @@ impl ViewRenderer {
             "hyper/pay.html",
             include_str!("../../templates/hyper/pay.html"),
         )?;
+        env.add_function("t", |key: String| -> String {
+            RENDER_LOCALE.with(|locale| i18n_service::translate(&key, &locale.borrow()))
+        });
         Ok(Self {
             env,
             csrf_token,
@@ -118,6 +126,8 @@ impl ViewRenderer {
             .env
             .get_template(name)
             .map_err(|err| AppError::Anyhow(err.into()))?;
+        let locale = i18n_service::resolve_locale(&site.language).to_string();
+        RENDER_LOCALE.with(|cell| *cell.borrow_mut() = locale);
         let rendered = tmpl
             .render(context! {
                 site => site,

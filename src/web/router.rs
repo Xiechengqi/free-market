@@ -11,7 +11,7 @@ use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::{
-    security::{csrf, session},
+    security::csrf,
     state::AppState,
     view::{admin_spa, assets},
     web::{
@@ -28,10 +28,16 @@ async fn healthz(State(state): State<AppState>) -> impl IntoResponse {
         .fetch_one(&state.pool)
         .await
         .is_ok();
+    let schema_version: i64 = sqlx::query_scalar("PRAGMA user_version")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
     axum::Json(serde_json::json!({
         "status": if db_ok { "ok" } else { "degraded" },
         "version": env!("CARGO_PKG_VERSION"),
         "db": if db_ok { "ok" } else { "down" },
+        "schema_version": schema_version,
+        "schema_revision_max": crate::db::schema::SCHEMA_VERSION,
         "uptime_secs": started.elapsed().as_secs(),
         "worker": state.worker_id,
     }))
@@ -45,95 +51,6 @@ async fn redirect_install(State(state): State<AppState>) -> impl IntoResponse {
 
 pub fn router(state: AppState) -> Router {
     let admin_prefix = normalize_admin_prefix(&state.config.admin.route_prefix);
-    let _protected_admin = Router::new()
-        .route("/", get(admin::dashboard))
-        .route("/orders", get(admin::orders))
-        .route("/orders/export", get(admin::export_orders))
-        .route("/orders/:id", get(admin::order))
-        .route("/orders/:id/fulfill", post(admin::fulfill))
-        .route("/orders/:id/cancel", post(admin::cancel_order))
-        .route("/orders/:id/resend-email", post(admin::resend_order_email))
-        .route(
-            "/orders/:id/mark-abnormal",
-            post(admin::mark_order_abnormal),
-        )
-        .route("/orders/:id/delete", post(admin::delete_order))
-        .route(
-            "/orders/:id/start-processing",
-            post(admin::start_order_processing),
-        )
-        .route(
-            "/categories",
-            get(admin::categories).post(admin::create_category),
-        )
-        .route("/categories/:id", post(admin::update_category))
-        .route("/categories/:id/delete", post(admin::delete_category))
-        .route(
-            "/products",
-            get(admin::products).post(admin::create_product),
-        )
-        .route("/products/:id", post(admin::update_product))
-        .route("/products/:id/delete", post(admin::delete_product))
-        .route("/cards", get(admin::global_cards))
-        .route("/cards/export", get(admin::export_global_cards))
-        .route("/cards/:id/delete", post(admin::delete_global_card))
-        .route("/products/:id/cards", get(admin::cards))
-        .route("/products/:id/cards/export", get(admin::export_cards))
-        .route("/products/:id/cards/import", post(admin::import_cards))
-        .route(
-            "/products/:product_id/cards/:card_id/delete",
-            post(admin::delete_card),
-        )
-        .route(
-            "/payment-channels",
-            get(admin::payment_channels).post(admin::create_payment_channel),
-        )
-        .route("/payment-channels/:id", post(admin::update_payment_channel))
-        .route(
-            "/payment-channels/:id/delete",
-            post(admin::delete_payment_channel),
-        )
-        .route("/coupons", get(admin::coupons).post(admin::create_coupon))
-        .route("/coupons/:id", post(admin::update_coupon))
-        .route("/coupons/:id/delete", post(admin::delete_coupon))
-        .route(
-            "/email-templates",
-            get(admin::email_templates).post(admin::create_email_template),
-        )
-        .route("/email-templates/:id", post(admin::update_email_template))
-        .route(
-            "/email-templates/:id/delete",
-            post(admin::delete_email_template),
-        )
-        .route(
-            "/email-templates/restore-defaults",
-            post(admin::restore_default_email_templates),
-        )
-        .route(
-            "/email-test",
-            get(admin::email_test).post(admin::send_email_test),
-        )
-        .route("/admins", get(admin::admins).post(admin::create_admin))
-        .route("/admins/:id", post(admin::update_admin))
-        .route("/uploads", get(admin::uploads).post(admin::upload_file))
-        .route("/uploads/cleanup", post(admin::cleanup_uploads))
-        .route("/jobs", get(admin::jobs))
-        .route("/jobs/:id/retry", post(admin::retry_job))
-        .route("/jobs/cleanup", post(admin::cleanup_runtime))
-        .route("/notification-logs", get(admin::notification_logs))
-        .route("/trash", get(admin::trash))
-        .route("/trash/:table/:id/restore", post(admin::restore_trash))
-        .route("/audit-logs", get(admin::audit_logs))
-        .route("/backup", get(admin::backup))
-        .route("/backup/create", post(admin::create_backup))
-        .route("/backup/files/:filename", get(admin::download_backup_file))
-        .route("/backup/settings", post(admin::save_backup_settings))
-        .route("/settings", get(admin::settings).post(admin::save_settings))
-        .route("/logout", post(admin::logout))
-        .route_layer(middleware::from_fn_with_state(
-            state.clone(),
-            session::admin_auth_middleware,
-        ));
 
     let frontend_forms = Router::new()
         .route("/create-order", post(frontend::create_order))

@@ -38,7 +38,8 @@ pub async fn create_payment(
     headers: &HeaderMap,
 ) -> AppResult<PayPageData> {
     order_service::maybe_cancel_expired(state, order_no).await?;
-    let order = order_service::get_order_by_no(&state.pool, order_no).await?;
+    let locale = settings_service::runtime_site_config(state).await.language;
+    let order = order_service::get_order_by_no(&state.pool, order_no, &locale).await?;
     if order.status != models::ORDER_PENDING_PAYMENT {
         return Err(AppError::BadRequest("订单不是待支付状态".to_string()));
     }

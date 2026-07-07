@@ -1,4 +1,4 @@
-import type { SelectBaseOption } from 'naive-ui/es/select/src/interface';
+import type { SelectMixedOption } from 'naive-ui/es/select/src/interface';
 
 // Payment-method specs — single source of truth for the channel form.
 //
@@ -22,7 +22,7 @@ export type FieldType =
   | 'multiselect'
   | 'switch';
 
-export type SelectOption = SelectBaseOption<string, string>;
+export type SelectOption = SelectMixedOption;
 
 export interface FieldSpec {
   /** JSON key inside config_json */

@@ -33,12 +33,12 @@
                             </button>
                             <div class="collapse navbar-collapse" id="navbarColor">
                                 <ul class="navbar-nav me-auto">
-                                    <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="/order-search">订单查询</a></li>
+                                    <li class="nav-item"><a class="nav-link active" href="/">{{ t("nav.home") }}</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="/order-search">{{ t("nav.order_search") }}</a></li>
                                 </ul>
                                 <form class="d-flex">
-                                    <input class="form-control form-control-sm me-sm-2" id="searchText" type="text" placeholder="搜索商品名称">
-                                    <button class="btn btn-secondary my-2 my-sm-0" type="button" id="searchBtn">搜索</button>
+                                    <input class="form-control form-control-sm me-sm-2" id="searchText" type="text" placeholder="{{ t('home.search_product_name') }}">
+                                    <button class="btn btn-secondary my-2 my-sm-0" type="button" id="searchBtn">{{ t("nav.search") }}</button>
                                 </form>
                             </div>
                         </div>
@@ -53,7 +53,7 @@
         <div class="row"><div class="col-12">
             <div class="card mt-3"><div class="card-body">
                 <div class="jumbotron jumbotron-fluid p-1"><div class="container">
-                    <h4>站点公告：</h4>
+                    <h4>{{ t("home.site_notice") }}</h4>
                     <p class="lead">{{ site.notice | safe }}</p>
                 </div></div>
             </div></div>
@@ -65,14 +65,14 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
-                    <h3 class="text-center"><span>今天需要点什么？</span></h3>
+                    <h3 class="text-center"><span>{{ t("home.headline") }}</span></h3>
                     <div class="separator"></div>
-                    <p class="lead text-center"><span>选择分类并下单，支付完成后自动发货。</span></p>
+                    <p class="lead text-center"><span>{{ t("home.subheadline") }}</span></p>
                 </div>
                 <div class="col-md-12">
                     <div class="category-menus">
                         <ul class="nav nav-pills justify-content-center">
-                            <li class="nav-item"><a href="#group-all" data-bs-toggle="tab" class="btn btn-outline-secondary active">全部</a></li>
+                            <li class="nav-item"><a href="#group-all" data-bs-toggle="tab" class="btn btn-outline-secondary active">{{ t("home.all_categories") }}</a></li>
                             {% for category in data.categories %}
                             <li class="nav-item"><a href="#group-{{ category.id }}" data-bs-toggle="tab" class="btn btn-outline-secondary">{{ category.name }}</a></li>
                             {% endfor %}
@@ -93,16 +93,16 @@
                             <div class="col">
                                 <div class="card position-relative">
                                     {% if product.fulfillment_type == "auto" %}
-                                    <span class="badge bg-success position-absolute top-0 start-0">自动发货</span>
+                                    <span class="badge bg-success position-absolute top-0 start-0">{{ t("home.auto_delivery") }}</span>
                                     {% else %}
-                                    <span class="badge bg-warning position-absolute top-0 start-0">人工处理</span>
+                                    <span class="badge bg-warning position-absolute top-0 start-0">{{ t("home.manual_processing") }}</span>
                                     {% endif %}
                                     <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
                                     <div class="card-body">
                                         <h6 class="card-title text-truncate">{{ product.name }}</h6>
                                         <button type="button" class="btn btn-sm btn-outline-success"><strong>{{ product.price_display }}</strong></button>
-                                        <h6 class="mt-2"><small class="text-muted">库存：{{ product.stock }}</small></h6>
-                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">立即购买</a>
+                                        <h6 class="mt-2"><small class="text-muted">{{ t("buy.stock_colon") }}{{ product.stock }}</small></h6>
+                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">{{ t("buy.buy_now") }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -117,16 +117,16 @@
                             <div class="col">
                                 <div class="card position-relative">
                                     {% if product.fulfillment_type == "auto" %}
-                                    <span class="badge bg-success position-absolute top-0 start-0">自动发货</span>
+                                    <span class="badge bg-success position-absolute top-0 start-0">{{ t("home.auto_delivery") }}</span>
                                     {% else %}
-                                    <span class="badge bg-warning position-absolute top-0 start-0">人工处理</span>
+                                    <span class="badge bg-warning position-absolute top-0 start-0">{{ t("home.manual_processing") }}</span>
                                     {% endif %}
                                     <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
                                     <div class="card-body">
                                         <h6 class="card-title text-truncate">{{ product.name }}</h6>
                                         <button type="button" class="btn btn-sm btn-outline-success"><strong>{{ product.price_display }}</strong></button>
-                                        <h6 class="mt-2"><small class="text-muted">库存：{{ product.stock }}</small></h6>
-                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">立即购买</a>
+                                        <h6 class="mt-2"><small class="text-muted">{{ t("buy.stock_colon") }}{{ product.stock }}</small></h6>
+                                        <a href="{% if product.stock > 0 %}/buy/{{ product.id }}{% else %}javascript:void(0){% endif %}" class="btn btn-primary fr">{{ t("buy.buy_now") }}</a>
                                     </div>
                                 </div>
                             </div>

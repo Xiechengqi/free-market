@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ site.language | default('zh-CN') }}">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -17,8 +17,8 @@
     <div class="container"><nav class="navbar navbar-expand-lg navbar-light">
         <a class="navbar-brand" href="/">{{ site.logo_text }}</a>
         <div class="collapse navbar-collapse show"><ul class="navbar-nav me-auto">
-            <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
-            <li class="nav-item"><a class="nav-link" href="/order-search">订单查询</a></li>
+            <li class="nav-item"><a class="nav-link" href="/">{{ t("nav.home") }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/order-search">{{ t("nav.order_search") }}</a></li>
         </ul></div>
     </nav></div>
 </header>
@@ -36,34 +36,34 @@
                             <div class="col-md-8">
                                 <div class="card-body p-4">
                                     <h3 class="card-title">{{ data.product.name }}</h3>
-                                    <h6><small class="text-muted">库存：{{ data.product.stock }}</small></h6>
-                                    {% if data.product.buy_limit_num > 0 %}<h6><small class="badge bg-danger">限购({{ data.product.buy_limit_num }})</small></h6>{% endif %}
+                                    <h6><small class="text-muted">{{ t("buy.stock_colon") }}{{ data.product.stock }}</small></h6>
+                                    {% if data.product.buy_limit_num > 0 %}<h6><small class="badge bg-danger">{{ t("buy.purchase_limit") }}({{ data.product.buy_limit_num }})</small></h6>{% endif %}
                                     {% if data.product.wholesale_tiers %}
                                     <div class="sale">
                                         {% for tier in data.product.wholesale_tiers %}
-                                        <span class="badge bg-dark mt-1 mb-1">购买 {{ tier.quantity }} 件或以上，每件：{{ tier.unit_price_display }}</span>
+                                        <span class="badge bg-dark mt-1 mb-1">{{ t("buy.wholesale_tier_min") }}{{ tier.quantity }}{{ t("buy.wholesale_tier_or_more") }}{{ tier.unit_price_display }}</span>
                                         {% endfor %}
                                     </div>
                                     {% endif %}
                                     <div class="buy-form mt-3">
                                         <form action="/create-order?_csrf={{ csrf }}" method="post">
                                             <div class="form-group row">
-                                                <div class="col-12"><h6>价格：￥ {{ data.product.price_display }} {% if data.product.show_retail_price %}<small><del>￥{{ data.product.retail_price_display }}</del></small>{% endif %}</h6></div>
+                                                <div class="col-12"><h6>{{ t("buy.price_label") }}￥ {{ data.product.price_display }} {% if data.product.show_retail_price %}<small><del>￥{{ data.product.retail_price_display }}</del></small>{% endif %}</h6></div>
                                                 <div class="col-xs-12 col-md-6">
                                                     <input type="hidden" name="gid" value="{{ data.product.id }}">
-                                                    <label class="col-form-label">邮箱:</label>
-                                                    <input type="email" class="form-control form-control-sm" name="email" required placeholder="接收卡密或通知">
+                                                    <label class="col-form-label">{{ t("buy.email_label") }}</label>
+                                                    <input type="email" class="form-control form-control-sm" name="email" required placeholder="{{ t('buy.email_placeholder') }}">
                                                 </div>
                                                 <div class="col-xs-12 col-md-4">
-                                                    <label class="col-form-label">购买数量:</label>
+                                                    <label class="col-form-label">{{ t("buy.quantity_label") }}</label>
                                                     <input type="number" class="form-control form-control-sm" id="shop-number" name="by_amount" min="1" value="1">
                                                 </div>
                                                 <div class="col-xs-12 col-md-6">
-                                                    <label class="col-form-label">优惠码:</label>
+                                                    <label class="col-form-label">{{ t("buy.coupon_code_label") }}</label>
                                                     <input type="text" class="form-control form-control-sm" name="coupon_code">
                                                 </div>
                                                 <div class="col-xs-12 col-md-6">
-                                                    <label class="col-form-label">查询密码:</label>
+                                                    <label class="col-form-label">{{ t("buy.search_password_label") }}</label>
                                                     <input type="text" class="form-control form-control-sm" name="search_pwd" required>
                                                 </div>
                                             </div>
@@ -76,14 +76,14 @@
                                                 {% endfor %}
                                                 {% if data.captcha_enabled %}
                                                 <div class="col-xs-12 col-md-6">
-                                                    <label class="col-form-label">验证码:</label>
+                                                    <label class="col-form-label">{{ t("buy.captcha_label") }}</label>
                                                     <input type="hidden" name="captcha_id" value="{{ data.captcha_id }}">
                                                     <input type="text" class="form-control form-control-sm" name="captcha_answer" placeholder="{{ data.captcha_question }}" required>
                                                 </div>
                                                 {% endif %}
                                                 <div class="col-12">
                                                     <fieldset>
-                                                        <label class="col-form-label">支付方式：</label>
+                                                        <label class="col-form-label">{{ t("buy.payment_method_label") }}</label>
                                                         {% for way in data.payways %}
                                                         <div class="form-check form-check-inline">
                                                             <label class="form-check-label"><input type="radio" class="form-check-input" name="payway" value="{{ way.id }}" data-type="{{ way.pay_check }}" data-provider="{{ way.provider_type }}" data-channel="{{ way.channel_type }}" {% if way.selected %}checked{% endif %}><span class="payment-badge payment-badge-{{ way.pay_check }}">{{ way.badge }}</span>{{ way.name }}</label>
@@ -91,7 +91,7 @@
                                                         {% endfor %}
                                                     </fieldset>
                                                 </div>
-                                                <div class="col-12 mt-2"><button type="submit" id="submit" class="btn btn-outline-primary">立即购买</button></div>
+                                                <div class="col-12 mt-2"><button type="submit" id="submit" class="btn btn-outline-primary">{{ t("buy.buy_now") }}</button></div>
                                             </div>
                                         </form>
                                     </div>
@@ -103,7 +103,7 @@
             </div>
             <div class="row justify-content-center">
                 <div class="col-12 col-md-8">
-                    <div class="card mt-3 mb-3"><div class="card-header"><h5>商品描述</h5></div><div class="card-body">
+                    <div class="card mt-3 mb-3"><div class="card-header"><h5>{{ t("buy.product_description") }}</h5></div><div class="card-body">
                         {% if data.product.buy_prompt %}<div class="alert alert-info">{{ data.product.buy_prompt | safe }}</div>{% endif %}
                         {{ data.product.description_html | safe }}
                     </div></div>
@@ -117,11 +117,15 @@
 <script src="/assets/unicorn/js/bootstrap.min.js"></script>
 <script src="/assets/unicorn/js/bootstrap-input-spinner.js"></script>
 <script>
+    const i18n = {
+        out_of_stock: "{{ t('error.out_of_stock') }}",
+        exceeds_limit: "{{ t('error.exceeds_limit') }}"
+    };
     $("input[type='number']").inputSpinner && $("input[type='number']").inputSpinner();
     $('#submit').click(function(){
-        if(parseInt($("input[name='by_amount']").val(), 10) > {{ data.product.stock }}){ alert("库存不足"); return false; }
+        if(parseInt($("input[name='by_amount']").val(), 10) > {{ data.product.stock }}){ alert(i18n.out_of_stock); return false; }
         {% if data.product.buy_limit_num > 0 %}
-        if(parseInt($("input[name='by_amount']").val(), 10) > {{ data.product.buy_limit_num }}){ alert("超过限购数量"); return false; }
+        if(parseInt($("input[name='by_amount']").val(), 10) > {{ data.product.buy_limit_num }}){ alert(i18n.exceeds_limit); return false; }
         {% endif %}
     });
 </script>

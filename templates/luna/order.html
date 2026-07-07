@@ -1,19 +1,19 @@
 <!doctype html>
-<html lang="zh-CN">
-<head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>订单详情 - {{ site.name }}</title><link rel="stylesheet" href="/assets/luna/layui/css/layui.css"><link rel="stylesheet" href="/assets/luna/main.css"></head>
+<html lang="{{ site.language | default('zh-CN') }}">
+<head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ t("order.detail_title") }} - {{ site.name }}</title><link rel="stylesheet" href="/assets/luna/layui/css/layui.css"><link rel="stylesheet" href="/assets/luna/main.css"></head>
 <body><div class="background"></div>
 <div class="main"><div class="layui-row"><div class="layui-col-md8 layui-col-md-offset2 layui-col-sm12"><div class="main-box">
-  <div class="title">订单详情</div>
+  <div class="title">{{ t("order.detail_title") }}</div>
   <div style="padding:20px">
-    <p>订单号：{{ data.order.order_no }}</p>
-    <p>状态：{{ data.order.status }}</p>
-    <p>金额：￥{{ data.amount_display }}</p>
-    <p>邮箱：{{ data.order.guest_email }}</p>
+    <p>{{ t("order.order_no_label") }}{{ data.order.order_no }}</p>
+    <p>{{ t("order.status_label") }}{{ data.order.status }}</p>
+    <p>{{ t("order.amount_label") }}￥{{ data.amount_display }}</p>
+    <p>{{ t("order.email_label") }}{{ data.order.guest_email }}</p>
     {% if data.fulfillment %}
-    <h3 style="margin-top:20px">发货内容</h3>
+    <h3 style="margin-top:20px">{{ t("order.fulfillment_content") }}</h3>
     <pre style="white-space:pre-wrap">{{ data.fulfillment.payload }}</pre>
     {% else %}
-    <p style="margin-top:20px">暂无发货内容。</p>
+    <p style="margin-top:20px">{{ t("order.no_fulfillment") }}</p>
     {% endif %}
   </div>
 </div></div></div></div>

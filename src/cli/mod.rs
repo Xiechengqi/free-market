@@ -4,7 +4,7 @@ use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
 use sqlx::{Row, SqlitePool};
 
-use crate::{config::AppConfig, db, security::password};
+use crate::{build_info, config::AppConfig, db, security::password};
 
 #[derive(Debug, Parser)]
 #[command(name = "free-market", version, about = "freeMarket 自助发卡后端")]
@@ -12,7 +12,7 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
 
-    /// 仅检查数据库连通性，用于容器 HEALTHCHECK（保留兼容旧 docker-compose）。
+    /// 仅检查数据库连通性，用于 systemd 探活或 `free-market healthcheck`。
     #[arg(long, hide = true)]
     pub healthcheck: bool,
 }
@@ -23,6 +23,10 @@ pub enum Command {
     Serve,
     /// 检查数据库连通性，成功返回 0。
     Healthcheck,
+    /// 打印构建版本信息（commit、构建时间等）。
+    Version,
+    /// 查看数据库 schema revision（不修改数据库、不启动 Web 服务）。
+    SchemaVersion,
     /// 查看运行配置。
     Config {
         #[command(subcommand)]
@@ -82,6 +86,14 @@ pub async fn dispatch(cli: Cli) -> anyhow::Result<bool> {
             run_healthcheck().await?;
             Ok(false)
         }
+        Some(Command::Version) => {
+            run_version();
+            Ok(false)
+        }
+        Some(Command::SchemaVersion) => {
+            run_schema_version().await?;
+            Ok(false)
+        }
         Some(Command::Config { action }) => {
             run_config(action)?;
             Ok(false)
@@ -103,6 +115,38 @@ async fn run_healthcheck() -> anyhow::Result<()> {
         .await
         .context("sqlite ping")?;
     pool.close().await;
+    Ok(())
+}
+
+fn run_version() {
+    print!("{}", build_info::version_text());
+}
+
+async fn run_schema_version() -> anyhow::Result<()> {
+    let config = AppConfig::load().context("load config")?;
+    let pool = db::sqlite::connect(&config.database)
+        .await
+        .context("connect sqlite")?;
+    let status = db::schema::revision_status(&pool)
+        .await
+        .context("read schema revision")?;
+    pool.close().await;
+
+    println!("database path: {}", config.database.path.display());
+    println!("database schema revision: {}", status.database_revision);
+    println!(
+        "application supports up to schema revision: {}",
+        status.application_revision
+    );
+    if status.is_newer_than_app() {
+        println!("status: database is newer than this binary — upgrade free-market");
+        std::process::exit(2);
+    }
+    if status.needs_upgrade() {
+        println!("status: upgrade required — start `free-market` once to apply pending schema revisions");
+        std::process::exit(1);
+    }
+    println!("status: up to date");
     Ok(())
 }
 
@@ -141,7 +185,7 @@ fn run_config(action: ConfigAction) -> anyhow::Result<()> {
 fn default_config_candidates() -> Vec<std::path::PathBuf> {
     let mut out = vec![std::path::PathBuf::from("config.toml")];
     if let Some(home) = std::env::var_os("HOME").filter(|s| !s.is_empty()) {
-        out.push(std::path::PathBuf::from(home).join(".freemarket/config.toml"));
+        out.push(std::path::PathBuf::from(home).join(".free-market/config.toml"));
     }
     out
 }

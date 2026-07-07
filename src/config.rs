@@ -64,7 +64,7 @@ impl AppConfig {
         // Priority:
         //   1. $FREEMARKET_CONFIG (explicit override)
         //   2. ./config.toml in CWD (common when running from the project dir)
-        //   3. $HOME/.freemarket/config.toml (matches the default data dir)
+        //   3. $HOME/.free-market/config.toml (matches the default data dir)
         let explicit = std::env::var("FREEMARKET_CONFIG").ok();
         let candidates: Vec<PathBuf> = explicit
             .as_deref()
@@ -72,7 +72,7 @@ impl AppConfig {
             .unwrap_or_else(|| {
                 let mut paths = vec![PathBuf::from("config.toml")];
                 if let Some(home) = home_dir() {
-                    paths.push(home.join(".freemarket").join("config.toml"));
+                    paths.push(home.join(".free-market").join("config.toml"));
                 }
                 paths
             });
@@ -100,11 +100,11 @@ impl AppConfig {
     }
 }
 
-/// `$HOME/.freemarket` on unix, falling back to CWD-relative `./.freemarket` if HOME isn't set.
+/// `$HOME/.free-market` on unix, falling back to CWD-relative `./.free-market` if HOME isn't set.
 pub fn default_data_dir() -> PathBuf {
     home_dir()
-        .map(|home| home.join(".freemarket"))
-        .unwrap_or_else(|| PathBuf::from(".freemarket"))
+        .map(|home| home.join(".free-market"))
+        .unwrap_or_else(|| PathBuf::from(".free-market"))
 }
 
 fn home_dir() -> Option<PathBuf> {
@@ -122,7 +122,7 @@ impl Default for AppConfig {
                 run_worker: true,
             },
             database: DatabaseConfig {
-                path: default_data_dir().join("freemarket.db"),
+                path: default_data_dir().join("free-market.db"),
             },
             site: SiteConfig {
                 name: "freeMarket".to_string(),

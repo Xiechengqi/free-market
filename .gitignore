@@ -4,3 +4,5 @@
 /uploads
 /.env
 /config.toml
+/.free-market
+/zig-linux-*/

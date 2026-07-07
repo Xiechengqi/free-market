@@ -4,8 +4,8 @@ port = 8080
 
 [database]
 # All derived paths (uploads/, backups/, app.secret) sit next to this file.
-# Default if omitted: $HOME/.freemarket/freemarket.db
-path = "/root/.freemarket/freemarket.db"
+# Default if omitted: $HOME/.free-market/free-market.db
+path = "/root/.free-market/free-market.db"
 
 [site]
 name = "freeMarket"

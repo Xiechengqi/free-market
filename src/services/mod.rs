@@ -6,6 +6,7 @@ pub mod captcha_service;
 pub mod catalog_service;
 pub mod evm_local_service;
 pub mod fulfillment_service;
+pub mod i18n_service;
 pub mod order_service;
 pub mod payment_service;
 pub mod pricing_service;

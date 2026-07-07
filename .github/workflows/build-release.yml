@@ -1,0 +1,118 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl,aarch64-unknown-linux-musl
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+
+      - run: cargo install cargo-zigbuild --version 0.23.0 --locked
+
+      - name: Build release binary
+        run: ./build-ci.sh ${{ matrix.target }}
+
+      - name: Prepare assets
+        run: |
+          if [ "${{ matrix.target }}" = "arm64" ]; then
+            cp target/aarch64-unknown-linux-musl/release/free-market free-market-linux-arm64
+            ASSET=free-market-linux-arm64
+          else
+            cp target/x86_64-unknown-linux-musl/release/free-market free-market-linux-amd64
+            ASSET=free-market-linux-amd64
+          fi
+          sha256sum "$ASSET" > "$ASSET.sha256"
+          echo "ASSET=$ASSET" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: free-market-${{ matrix.target }}
+          path: |
+            ${{ env.ASSET }}
+            ${{ env.ASSET }}.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect release files
+        run: |
+          mkdir -p release-files
+          cp artifacts/free-market-amd64/free-market-linux-amd64 release-files/
+          cp artifacts/free-market-amd64/free-market-linux-amd64.sha256 release-files/
+          cp artifacts/free-market-arm64/free-market-linux-arm64 release-files/
+          cp artifacts/free-market-arm64/free-market-linux-arm64.sha256 release-files/
+
+      - id: version
+        run: |
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Reset rolling latest tag
+        run: |
+          gh release delete latest --yes || true
+          git push origin :refs/tags/latest || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Push latest tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest
+          git push -f origin latest
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Latest Build (${{ steps.version.outputs.version }})"
+          body: |
+            Version: ${{ steps.version.outputs.version }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+            Build timestamp: ${{ github.event.head_commit.timestamp }}
+
+            Assets:
+            - free-market-linux-amd64 (+ .sha256)
+            - free-market-linux-arm64 (+ .sha256)
+
+            Install (amd64 example):
+            ```bash
+            curl -LO https://github.com/${{ github.repository }}/releases/download/latest/free-market-linux-amd64
+            chmod +x free-market-linux-amd64
+            sudo mv free-market-linux-amd64 /usr/local/bin/free-market
+            ```
+          files: release-files/*

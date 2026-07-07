@@ -38,7 +38,7 @@ The project targets **single-node self-hosted, stable card sales**: one binary, 
 - Payment provider registry: unified `payments` table and idempotent callback validation. Built-in channels include `epay`, `tokenpay`, `epusdt`, `bepusdt`, `freemarketpay`, `okpay`, `evm-local`, and official Alipay/WeChat/Stripe/PayPal integrations.
 - Admin dashboard: products/categories/card secrets, order export/detail, payment channels, coupons, email templates, uploads, backup/scheduling, SMTP/multi-channel notifications, and system settings.
 - Anti-abuse: built-in arithmetic image captcha (`/captcha/:id`), email/IP purchase rate limits, and login lockout. Geetest is not supported.
-- Persistent settings: the `settings` table stores site/order/theme/captcha/security/SMTP/notification JSON. Sensitive values are encrypted with the local key in `data/app.secret`.
+- Persistent settings: the `settings` table stores site/order/theme/captcha/security/SMTP/notification JSON. Sensitive values are encrypted with the local key in `$HOME/.free-market/app.secret`.
 - Backup operations: online consistent SQLite snapshots (gzip) from `/admin/backup`, with weekly scheduled backups by default. `/healthz` and `--healthcheck` are available for probes.
 - Reverse-proxy friendly: recognizes `X-Forwarded-Proto` / `X-Forwarded-For` with configurable trusted proxy hops. Cloudflare Tunnel or orange-cloud proxy in front with plain HTTP on the app side is the recommended setup.
 
@@ -75,14 +75,6 @@ Required setup:
 1. `/admin/settings` — public `base_url`, theme, SMTP, notifications, captcha/security.
 2. `/admin/payment-channels` — add payment channels (see [Operations & payment guide](docs/README.md)).
 3. `/admin/products` / `/admin/cards` — create products and import card secrets.
-
-Optional Docker Compose:
-
-```bash
-docker compose up -d
-```
-
-This exposes port `8080` on the host. Terminate TLS at Cloudflare; see deployment notes below.
 
 ## Local Validation
 
@@ -125,16 +117,7 @@ Recommended values in `/admin/settings → 验证码与安全`:
 - **Cookie Secure** ✓ (auto-downgrades for `localhost` / `X-Forwarded-Proto: http`)
 - **Trust proxy hops** = `1` (Cloudflare prepends one hop in `X-Forwarded-For`)
 
-Pick one deployment path:
-
-**A) Docker Compose + Cloudflare Tunnel / proxied DNS**
-
-```bash
-docker compose up -d
-cloudflared tunnel run --url http://127.0.0.1:8080 freemarket
-```
-
-**B) systemd + Cloudflare**
+Deploy the release binary with systemd (see `deploy/free-market.service`) and put Cloudflare in front for TLS.
 
 ```bash
 sudo cp target/release/free-market /opt/free-market/
@@ -143,21 +126,27 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now free-market
 ```
 
+Optional Cloudflare Tunnel or proxied DNS in front:
+
+```bash
+cloudflared tunnel run --url http://127.0.0.1:8080 freemarket
+```
+
 Backup and restore:
 
 ```bash
 # Create and download backup.sqlite.gz from /admin/backup
 
 systemctl stop free-market
-zcat backup.sqlite.gz > /opt/free-market/data/freemarket.db
+zcat backup.sqlite.gz > ~/.free-market/free-market.db
 systemctl start free-market
 ```
 
-Preserve `data/app.secret`, `data/freemarket.db`, and `uploads/` together when migrating or restoring. Losing the secret key means encrypted SMTP/notification settings may need to be re-entered.
+Preserve `$HOME/.free-market/app.secret`, `free-market.db`, and `uploads/` together when migrating or restoring. Losing the secret key means encrypted SMTP/notification settings may need to be re-entered.
 
 ## Key Configuration
 
-Static config lives in `config.toml`. Runtime business settings are stored in the SQLite `settings` table and editable from `/admin/settings`. The database path determines sibling paths such as `uploads/`, `data/backups/`, and `data/app.secret`.
+Static config lives in `config.toml` (project dir or `$HOME/.free-market/config.toml` by default). Runtime business settings are stored in the SQLite `settings` table and editable from `/admin/settings`. When `database.path` is omitted, all data defaults to `$HOME/.free-market/` (`free-market.db`, `uploads/`, `backups/`, `app.secret`).
 
 | Area | Settings |
 | --- | --- |
@@ -166,6 +155,7 @@ Static config lives in `config.toml`. Runtime business settings are stored in th
 | Site defaults | `[site] name`, `base_url`, `theme`, `order_expire_minutes` |
 | Admin | `[admin] route_prefix`, `bootstrap_username`, `bootstrap_password`, `app_secret` |
 | Environment | `FREEMARKET_CONFIG`, `FREEMARKET_ALLOW_DEFAULT_ADMIN`, `RUST_LOG` |
+| CLI | `free-market version`, `free-market schema-version`, `free-market healthcheck` |
 | Proxy/security | `trust_proxy_hops`, `cookie_secure`, login lockout, purchase rate limits (admin settings) |
 | Captcha | `is_open_img_code` (arithmetic image captcha; no Geetest) |
 | Payments | provider / channel / `pay_check` / callback URLs (admin payment channels) |

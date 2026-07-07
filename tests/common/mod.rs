@@ -49,7 +49,7 @@ pub async fn boot() -> TestEnv {
         },
     };
     let pool = db::sqlite::connect(&config.database).await.unwrap();
-    db::migrate::run(&pool).await.unwrap();
+    db::schema::apply(&pool, &config.database.path).await.unwrap();
     let csrf_token = session::new_token();
     let (secret_manager, _, _) = SecretManager::load_or_create(
         tempdir.path().join("app.secret"),

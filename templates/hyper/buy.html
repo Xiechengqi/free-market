@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ site.language | default('zh-CN') }}">
 <head>
     <meta charset="utf-8">
     <title>{{ data.product.name }} | {{ site.name }}</title>
@@ -14,9 +14,9 @@
 </head>
 <body data-layout="topnav">
 <div class="wrapper"><div class="content-page"><div class="content">
-<div class="header-navbar"><div class="container header-flex"><a href="/" class="topnav-logo" style="float:none;"><img src="/assets/common/images/default.jpg" height="36"><div class="logo-title">{{ site.logo_text }}</div></a><a class="btn btn-outline-primary" href="/order-search">查询订单</a></div></div>
+<div class="header-navbar"><div class="container header-flex"><a href="/" class="topnav-logo" style="float:none;"><img src="/assets/common/images/default.jpg" height="36"><div class="logo-title">{{ site.logo_text }}</div></a><a class="btn btn-outline-primary" href="/order-search">{{ t("nav.search_orders") }}</a></div></div>
 <div class="container">
-<div class="row"><div class="col-12"><div class="page-title-box"><h4 class="page-title">产品详细信息</h4></div></div></div>
+<div class="row"><div class="col-12"><div class="page-title-box"><h4 class="page-title">{{ t("buy.product_info") }}</h4></div></div></div>
 <div class="buy-grid">
     <div class="buy-shop hyper-sm-last">
         <div class="card card-body sticky">
@@ -24,32 +24,32 @@
                 <div class="form-group"><h3>{{ data.product.name }}</h3></div>
                 <div class="form-group">
                     <span class="badge badge-outline-primary">{{ data.product.fulfillment_label }}</span>
-                    <span class="badge badge-outline-primary">库存({{ data.product.stock }})</span>
-                    {% if data.product.buy_limit_num > 0 %}<span class="badge badge-outline-dark">限购({{ data.product.buy_limit_num }})</span>{% endif %}
+                    <span class="badge badge-outline-primary">{{ t("buy.stock_label") }}({{ data.product.stock }})</span>
+                    {% if data.product.buy_limit_num > 0 %}<span class="badge badge-outline-dark">{{ t("buy.purchase_limit") }}({{ data.product.buy_limit_num }})</span>{% endif %}
                 </div>
                 {% if data.product.wholesale_tiers %}
-                <div class="form-group"><div class="alert alert-dark bg-white text-dark mb-0">{% for tier in data.product.wholesale_tiers %}<span>购买 {{ tier.quantity }} 件以上，{{ tier.unit_price_display }} 每件。</span>{% endfor %}</div></div>
+                <div class="form-group"><div class="alert alert-dark bg-white text-dark mb-0">{% for tier in data.product.wholesale_tiers %}<span>{{ t("buy.wholesale_tier_min") }} {{ tier.quantity }}{{ t("buy.wholesale_tier_above") }}{{ tier.unit_price_display }}{{ t("buy.wholesale_tier_each") }}</span>{% endfor %}</div></div>
                 {% endif %}
                 <div class="form-group"><h3><span class="buy-price">￥ {{ data.product.price_display }}</span>{% if data.product.show_retail_price %}<small><del>¥ {{ data.product.retail_price_display }}</del></small>{% endif %}</h3></div>
-                <div class="form-group"><div class="buy-title">电子邮箱</div><input type="hidden" name="gid" value="{{ data.product.id }}"><input type="email" name="email" class="form-control" placeholder="接收卡密或通知" required></div>
-                <div class="form-group"><div class="buy-title">购买数量</div><div class="input-group"><input data-toggle="touchspin" type="text" name="by_amount" value="1" data-bts-max="999"></div></div>
-                <div class="form-group"><div class="buy-title">查询密码</div><input type="text" name="search_pwd" class="form-control" placeholder="查询订单密码" required></div>
-                <div class="form-group"><div class="buy-title">优惠码</div><input type="text" name="coupon_code" class="form-control" placeholder="您有优惠码吗？"></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.email_title") }}</div><input type="hidden" name="gid" value="{{ data.product.id }}"><input type="email" name="email" class="form-control" placeholder="{{ t('buy.email_placeholder') }}" required></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.quantity") }}</div><div class="input-group"><input data-toggle="touchspin" type="text" name="by_amount" value="1" data-bts-max="999"></div></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.search_password") }}</div><input type="text" name="search_pwd" class="form-control" placeholder="{{ t('buy.search_password_placeholder') }}" required></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.coupon_code") }}</div><input type="text" name="coupon_code" class="form-control" placeholder="{{ t('buy.coupon_placeholder') }}"></div>
                 {% for field in data.product.manual_fields %}
                 <div class="form-group"><div class="buy-title">{{ field.label }}</div><input type="text" name="{{ field.field }}" {% if field.required %}required{% endif %} class="form-control"></div>
                 {% endfor %}
                 {% if data.captcha_enabled %}
-                <div class="form-group"><div class="buy-title">验证码</div><input type="hidden" name="captcha_id" value="{{ data.captcha_id }}"><input type="text" name="captcha_answer" class="form-control" placeholder="{{ data.captcha_question }}" required></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.captcha") }}</div><input type="hidden" name="captcha_id" value="{{ data.captcha_id }}"><input type="text" name="captcha_answer" class="form-control" placeholder="{{ data.captcha_question }}" required></div>
                 {% endif %}
-                <div class="form-group"><div class="buy-title">支付方式</div><div class="input-group"><input type="hidden" name="payway" value="{{ data.default_channel_id }}"><div class="pay-grid">{% for way in data.payways %}<div class="btn pay-type {% if way.selected %}active{% endif %}" data-type="{{ way.pay_check }}" data-provider="{{ way.provider_type }}" data-channel="{{ way.channel_type }}" data-id="{{ way.id }}" data-name="{{ way.name }}"><span class="payment-badge payment-badge-{{ way.pay_check }}">{{ way.badge }}</span>{{ way.name }}</div>{% endfor %}</div></div></div>
-                <div class="mt-4 text-center"><button type="submit" class="btn btn-danger" id="submit">提交订单</button></div>
+                <div class="form-group"><div class="buy-title">{{ t("buy.payment_method") }}</div><div class="input-group"><input type="hidden" name="payway" value="{{ data.default_channel_id }}"><div class="pay-grid">{% for way in data.payways %}<div class="btn pay-type {% if way.selected %}active{% endif %}" data-type="{{ way.pay_check }}" data-provider="{{ way.provider_type }}" data-channel="{{ way.channel_type }}" data-id="{{ way.id }}" data-name="{{ way.name }}"><span class="payment-badge payment-badge-{{ way.pay_check }}">{{ way.badge }}</span>{{ way.name }}</div>{% endfor %}</div></div></div>
+                <div class="mt-4 text-center"><button type="submit" class="btn btn-danger" id="submit">{{ t("buy.submit_order") }}</button></div>
             </form>
         </div>
     </div>
-    <div class="card card-body buy-product"><h5 class="card-title">商品详情</h5><img src="{{ data.product.image_url }}" class="img-fluid mb-3" alt="{{ data.product.name }}">{% if data.product.buy_prompt %}<div class="alert alert-info">{{ data.product.buy_prompt | safe }}</div>{% endif %}{{ data.product.description_html | safe }}</div>
+    <div class="card card-body buy-product"><h5 class="card-title">{{ t("buy.product_details") }}</h5><img src="{{ data.product.image_url }}" class="img-fluid mb-3" alt="{{ data.product.name }}">{% if data.product.buy_prompt %}<div class="alert alert-info">{{ data.product.buy_prompt | safe }}</div>{% endif %}{{ data.product.description_html | safe }}</div>
 </div>
 </div></div><footer class="hyper-footer"><div class="container"><div class="row"><div class="col-md-6"><div class="footer-links"></div></div><div class="col-md-6"><div class="text-md-right footer-links d-none d-md-block">{{ site.footer | safe }}</div></div></div></div></footer></div></div>
 <script src="/assets/hyper/js/jquery-3.4.1.min.js"></script><script src="/assets/hyper/js/vendor.min.js"></script><script src="/assets/hyper/js/app.min.js"></script><script src="/assets/hyper/js/hyper.js?v=215115"></script>
 <script>$('.pay-type').click(function(){ $('.pay-type').removeClass('active'); $(this).addClass('active'); $('input[name=payway]').val($(this).data('id')); });</script>
-<script>$('#submit').click(function(){ if($("input[name='email']").val()===''){ alert('邮箱不能为空'); return false; } if(parseInt($("input[name='by_amount']").val(),10)>{{ data.product.stock }}){ alert('库存不足'); return false; } {% if data.product.buy_limit_num > 0 %} if(parseInt($("input[name='by_amount']").val(),10)>{{ data.product.buy_limit_num }}){ alert('超过限购数量'); return false; } {% endif %} });</script>
+<script>const i18n={email_required:"{{ t('error.email_required') }}",out_of_stock:"{{ t('error.out_of_stock') }}",exceeds_limit:"{{ t('error.exceeds_limit') }}"};$('#submit').click(function(){ if($("input[name='email']").val()===''){ alert(i18n.email_required); return false; } if(parseInt($("input[name='by_amount']").val(),10)>{{ data.product.stock }}){ alert(i18n.out_of_stock); return false; } {% if data.product.buy_limit_num > 0 %} if(parseInt($("input[name='by_amount']").val(),10)>{{ data.product.buy_limit_num }}){ alert(i18n.exceeds_limit); return false; } {% endif %} });</script>
 </body></html>

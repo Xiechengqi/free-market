@@ -23,7 +23,7 @@ pub struct AppState {
 impl AppState {
     pub async fn build(config: AppConfig) -> anyhow::Result<Self> {
         let pool = db::sqlite::connect(&config.database).await?;
-        db::migrate::run(&pool).await?;
+        db::schema::apply(&pool, &config.database.path).await?;
         let csrf_token = crate::security::session::new_token();
         let admin_prefix = {
             let raw = config.admin.route_prefix.trim();

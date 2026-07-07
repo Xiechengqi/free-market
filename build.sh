@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
+
+set -euo pipefail -x
 cd "$(dirname "$0")"
 
 # 1. Build the admin SPA (Vue + Vite + NaiveUI) → web-admin/dist/

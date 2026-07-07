@@ -10,7 +10,7 @@ interface DashboardData {
   pending_order_count: number;
   canceled_order_count: number;
   total_sales_display: string;
-  today_orders: number;
+  today_order_count: number;
   today_sales_display: string;
 }
 
@@ -34,7 +34,7 @@ onMounted(load);
 
 const cards = [
   { key: 'order_count', label: '订单总数', color: '#2e7d32' },
-  { key: 'today_orders', label: '今日订单', color: '#1565c0' },
+  { key: 'today_order_count', label: '今日订单', color: '#1565c0' },
   { key: 'completed_order_count', label: '已完成', color: '#5e35b1' },
   { key: 'pending_order_count', label: '待支付', color: '#ef6c00' },
   { key: 'canceled_order_count', label: '已取消', color: '#9e9e9e' },

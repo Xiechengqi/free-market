@@ -4035,13 +4035,13 @@ build.sh 端到端  ✓
 - 优惠码 start_time/end_time 时间窗：原 dujiaoka 有这字段，本项目 schema (`migrations/0003`) 没建，需要 migration，本批次不做（影响小，可手动用 `is_active=0` 模拟）。
 - 商品 `description_html` 是 textarea，不是 RTE。原项目用 UEditor，soybean 这边无现成 Markdown/RTE，textarea 满足"能编辑"即可。
 - 全局卡密 / uploads 列表的批量删除：UI 没加多选，单条删除够用。
-- `web/admin/mod.rs` 仍是 dead code（800 行 server-rendered handler）。本批次只动 `is_allowed_image` 可见性，整体清理留待后续单独 PR。
+- `web/admin/mod.rs` 死代码已清理（2026-07-07）：仅保留 `uploaded_file`、`is_allowed_image`、`api` 模块；未挂载的 SSR handler 与 `_protected_admin` 路由块已删除。
 
-## §49 — 2026-07-07 dujiaoka 对齐审计收尾决策与规划（未实施）
+## §49 — 2026-07-07 dujiaoka 对齐审计收尾决策与规划 ✅（已实施 2026-07-07）
 
-针对「功能上是否已完全对齐 dujiaoka」审计（详见对话记录）识别出的 5 项残余差距，用户逐项决策如下。本节只记录决策与实施方案，**本批次不执行**（除 49.1 的代码清理已落盘、未重编译）。
+针对「功能上是否已完全对齐 dujiaoka」审计识别出的 5 项残余差距，用户逐项决策如下。本节记录决策与实施结果。
 
-### 49.1 五个小众支付 provider —— 决策：不接入，清理残留 ✅（代码已改，待重编译）
+### 49.1 五个小众支付 provider —— 决策：不接入，清理残留 ✅（已重编译）
 
 Mapay（码支付）/ Paysapi / PayJS / VPay（V免签）/ Coinbase Commerce 确认不再接入。
 
@@ -4053,7 +4053,7 @@ Mapay（码支付）/ Paysapi / PayJS / VPay（V免签）/ Coinbase Commerce 确
 
 **保留不动**：`assets/hyper/js/hyper.js` 与 `assets/luna/main.js` 里的 coinbase SVG 图标映射。理由：这两个文件是原主题的机械迁移产物（PLAN 边界「前端模板机械迁移、DOM/CSS 不破坏」），图标映射是纯展示兜底，admin 已无法产生 `pay_check=coinbase` 的新数据，删除无收益、改动有回归风险。
 
-收尾动作（下批次）：`./build.sh --release` 重编译 + 重启，将上述三处清理编进 binary。
+收尾动作：`./build.sh --release` 已于 2026-07-07 完成，产物为 `target/release/free-market`。
 
 ### 49.2 Geetest 服务端校验 —— 已决策：方案 B（已实施 2026-07-07）
 
@@ -4111,39 +4111,27 @@ Mapay（码支付）/ Paysapi / PayJS / VPay（V免签）/ Coinbase Commerce 确
 
 不做 dujiaoka MySQL → SQLite 的存量迁移工具（PLAN §33.1 撤销）。本项目仅面向新站点部署。文档如提及迁移能力需同步删除（当前 docs/README.md 未承诺此能力，无需改动）。
 
-### 49.5 前台 i18n 实施规划（待实施）
+### 49.5 前台 i18n —— ✅（已实施 2026-07-07）
 
-**现状**：`settings.language` 仅切换 `<html lang>`；三套主题模板（luna/hyper/unicorn × 7 页）中文硬编码约 **107 个去重字符串**；后端面向用户的错误消息（order_service 等）约 **18+ 条**中文硬编码。admin SPA 已有完整 i18n（soybean zh-cn/en-us 字典），不在本规划范围。dujiaoka 原版支持 `zh_CN / zh_TW / en` 三语。
+**已交付**：
 
-**方案：轻量嵌入式字典 + minijinja 函数**（不引第三方 i18n 框架，维持单 binary 边界）
+- `locales/zh-CN.toml`、`locales/en-US.toml`（146 keys，双语 key 集合一致）
+- `services/i18n_service.rs`：`translate` / `translate_with` / `resolve_locale`，`include_str!` + `OnceLock`
+- `ViewRenderer` 注册 minijinja `t(key)`，按 `settings.language` 渲染
+- 21 个前台模板（luna/hyper/unicorn × 7 页）机械替换为 `{{ t("...") }}`
+- `order_service` 用户可见错误改为 error code + 字典翻译
+- `tests/i18n.rs` + `i18n_service` 单元测试
 
-1. **字典文件**：`locales/zh-CN.toml`、`locales/en-US.toml`（一期两语，`zh-TW` 按需三期）。扁平 key 命名按页面分段：
-   ```toml
-   [buy]
-   order_now = "下单"
-   stock = "库存"
-   fill_email = "填写你的邮箱"
-   [order]
-   search = "订单查询"
-   [error]
-   out_of_stock = "库存不足"
-   coupon_not_found = "优惠码不存在"
-   ```
-   通过 `include_str!` + `OnceLock<HashMap>` 编进 binary，启动时解析一次。
-2. **模板层**：给 minijinja `Environment` 注册全局函数 `t(key)`（`add_function`），渲染上下文注入当前 locale（来自 `settings.language`，请求级读取已有缓存）。模板改写 `下单` → `{{ t("buy.order_now") }}`。107 个字符串 × 3 主题逐页机械替换（每页 diff 可控，DOM/CSS 不动）。
-3. **后端消息层**：`AppError::BadRequest("库存不足")` 类硬编码改为 error code 枚举 + 渲染时查字典：新增 `services/i18n_service.rs::translate(code, locale)`；JSON API 返回 `{code, msg}` 时 msg 走翻译。约 18 条 order/coupon/frontend 错误消息入字典。
-4. **语言选择优先级**：`settings.language`（站点级，owner 配置）为唯一来源，一期**不做**per-visitor 切换（Accept-Language / cookie），避免缓存与 SEO 复杂化；预留 `resolve_locale(state, headers)` 接口签名，二期若要访客自选只改这一个函数。
-5. **回退规则**：key 未命中 → 回退 zh-CN → 再未命中输出 key 本身（醒目便于发现漏译）。
-6. **验收**：
-   - `language=en-US` 时三主题 7 页无中文残留（`grep -P '[\x{4e00}-\x{9fa5}]'` 渲染输出为空，货币符号/商品数据除外）；
-   - 下单错误提示随 locale 切换；
-   - `cargo test` 新增 i18n 单测（字典完整性：两个 locale 的 key 集合一致）。
-7. **工作量估算**：字典抽取与双语翻译 ~0.5 天；模板替换 ~1 天（3 主题机械改）；后端错误码化 ~0.5 天；测试与验收 ~0.5 天。合计 **~2.5 天**，可拆 3 个独立 PR（字典+函数 / 模板替换 / 后端错误码）。
-8. **明确不做**：URL 级多语言路由（`/en/buy/1`）、数据库内容翻译（商品名/描述随录入语言）、admin SPA 改动、邮件模板翻译（模板本身在 DB 可编辑，运营自行维护语言版本）。
+**明确不做**（与规划一致）：URL 级多语言路由、数据库内容翻译、admin SPA 改动、邮件模板翻译、per-visitor Accept-Language 切换。
 
-### 49.6 执行顺序建议
+### 49.6 执行顺序建议（已完成）
 
-1. 49.1 收尾：重编译 + 重启（5 分钟，随下一次任何构建自然完成）；
-2. ~~49.2 用户先定方案 A/B~~ 49.2 方案 B 已实施；
-3. 49.5 i18n 按 3 个 PR 推进（字典 → 模板 → 后端错误码）；
-4. 49.3 / 49.4 无动作，已关闭。
+1. ✅ 49.1 重编译 release；
+2. ✅ 49.2 Geetest 方案 B；
+3. ✅ 49.5 i18n（字典 → 模板 → 后端错误码）；
+4. ✅ 运维热修（dashboard 字段、better-scroll 类型）；
+5. ✅ 死代码清理（`web/admin/mod.rs` 仅保留 `uploaded_file` / `is_allowed_image` / `api`；删除未挂载 `_protected_admin` 路由块）；
+6. ⏸ 49.3 / 49.4 无动作，已关闭；
+7. ⏸ evm-local 实链验收（ISSUES #4 blocked，待 Alchemy key）。
+8. ✅ 移除 Docker 支持（删除 `Dockerfile` / `docker-compose.yml`；文档仅保留 systemd + 裸二进制部署）。
+9. ✅ Schema 升级管理（`migrations/` → `schema/`；`PRAGMA user_version`；升级前备份 + SAVEPOINT；拒绝库版本过新）。

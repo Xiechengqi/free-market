@@ -11,10 +11,26 @@ use crate::{
         order::{Fulfillment, Order},
     },
     money,
-    services::{captcha_service, pricing_service, settings_service},
+    services::{captcha_service, i18n_service, pricing_service, settings_service},
     state::AppState,
     time,
 };
+
+async fn site_locale(state: &AppState) -> String {
+    settings_service::runtime_site_config(state).await.language
+}
+
+fn user_err(key: &str, locale: &str) -> AppError {
+    AppError::BadRequest(i18n_service::translate(key, locale))
+}
+
+fn user_conflict(key: &str, locale: &str) -> AppError {
+    AppError::Conflict(i18n_service::translate(key, locale))
+}
+
+fn user_not_found(key: &str, locale: &str) -> AppError {
+    AppError::NotFound(i18n_service::translate(key, locale))
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateOrderForm {
@@ -77,18 +93,19 @@ pub async fn create_guest_order(
     form: CreateOrderForm,
     ip: String,
 ) -> AppResult<String> {
+    let locale = site_locale(state).await;
     if form.by_amount < 1 {
-        return Err(AppError::BadRequest("购买数量不能低于 1".to_string()));
+        return Err(user_err("error.purchase_qty_min", &locale));
     }
     if !form.email.contains('@') {
-        return Err(AppError::BadRequest("邮箱格式不正确".to_string()));
+        return Err(user_err("error.invalid_email", &locale));
     }
     let captcha_config = settings_service::captcha_config(state).await;
     if captcha_config.is_open_img_code {
         let captcha_id = form.captcha_id.as_deref().unwrap_or_default();
         let captcha_answer = form.captcha_answer.as_deref().unwrap_or_default();
         if !captcha_service::verify(state, captcha_id, captcha_answer).await? {
-            return Err(AppError::BadRequest("验证码错误".to_string()));
+            return Err(user_err("error.captcha_wrong", &locale));
         }
     }
 
@@ -110,9 +127,7 @@ pub async fn create_guest_order(
             .fetch_one(&state.pool)
             .await?;
             if count >= order_config.purchase_rate_max_per_email {
-                return Err(AppError::BadRequest(
-                    "同一邮箱下单过于频繁，请稍后再试".to_string(),
-                ));
+                return Err(user_err("error.email_rate_limit", &locale));
             }
         }
         if order_config.purchase_rate_max_per_ip > 0 && !ip.is_empty() {
@@ -124,9 +139,7 @@ pub async fn create_guest_order(
             .fetch_one(&state.pool)
             .await?;
             if count >= order_config.purchase_rate_max_per_ip {
-                return Err(AppError::BadRequest(
-                    "当前 IP 下单过于频繁，请稍后再试".to_string(),
-                ));
+                return Err(user_err("error.ip_rate_limit", &locale));
             }
         }
     }
@@ -142,7 +155,7 @@ pub async fn create_guest_order(
     .bind(form.gid)
     .fetch_optional(&mut *tx)
     .await?
-    .ok_or_else(|| AppError::NotFound("商品不存在".to_string()))?;
+    .ok_or_else(|| user_not_found("error.product_not_found", &locale))?;
 
     let product_id = product.get::<i64, _>("id");
     let product_name = product.get::<String, _>("name");
@@ -152,16 +165,17 @@ pub async fn create_guest_order(
     let manual_form_schema_json = product.get::<String, _>("manual_form_schema_json");
     let buy_limit_num = product.get::<i64, _>("buy_limit_num");
     if buy_limit_num > 0 && form.by_amount > buy_limit_num {
-        return Err(AppError::BadRequest("超过单次限购数量".to_string()));
+        return Err(user_err("error.exceeds_purchase_limit", &locale));
     }
 
-    let manual_form_json = collect_manual_form(&manual_form_schema_json, &form.extra)?;
+    let manual_form_json = collect_manual_form(&manual_form_schema_json, &form.extra, &locale)?;
     let quote = pricing_service::quote(price_cents, form.by_amount, &wholesale_prices_json);
     let (coupon_id, coupon_discount_cents) = resolve_coupon_discount(
         &mut tx,
         form.coupon_code.as_deref(),
         product_id,
         quote.payable_before_coupon_cents,
+        &locale,
     )
     .await?;
     let payable_cents = (quote.payable_before_coupon_cents - coupon_discount_cents).max(0);
@@ -247,9 +261,7 @@ pub async fn create_guest_order(
                 .fetch_one(&mut *tx)
                 .await?;
                 if loop_available > 0 {
-                    return Err(AppError::BadRequest(
-                        "循环卡密一次只能购买 1 件".to_string(),
-                    ));
+                    return Err(user_err("error.loop_card_one_only", &locale));
                 }
             }
         }
@@ -265,7 +277,7 @@ pub async fn create_guest_order(
         .fetch_all(&mut *tx)
         .await?;
         if ids.len() != form.by_amount as usize {
-            return Err(AppError::Conflict("库存不足".to_string()));
+            return Err(user_conflict("error.out_of_stock", &locale));
         }
         for id in ids {
             let affected = sqlx::query(
@@ -280,14 +292,14 @@ pub async fn create_guest_order(
             .await?
             .rows_affected();
             if affected != 1 {
-                return Err(AppError::Conflict("库存预占失败".to_string()));
+                return Err(user_conflict("error.stock_reserve_failed", &locale));
             }
         }
     } else {
         let manual_total = product.get::<i64, _>("manual_stock_total");
         let manual_locked = product.get::<i64, _>("manual_stock_locked");
         if manual_total >= 0 && manual_total - manual_locked < form.by_amount {
-            return Err(AppError::Conflict("人工库存不足".to_string()));
+            return Err(user_conflict("error.manual_stock_insufficient", &locale));
         }
         sqlx::query("UPDATE products SET manual_stock_locked = manual_stock_locked + ?, updated_at = ? WHERE id = ?")
             .bind(form.by_amount)
@@ -352,6 +364,7 @@ pub fn extract_browser_order_cookies(cookie_header: &str) -> Option<Vec<String>>
 fn collect_manual_form(
     schema_raw: &str,
     extra: &HashMap<String, String>,
+    locale: &str,
 ) -> AppResult<serde_json::Value> {
     let schema = parse_manual_schema(schema_raw);
     if schema.is_empty() {
@@ -364,7 +377,11 @@ fn collect_manual_form(
             .map(|value| value.trim().to_string())
             .unwrap_or_default();
         if field.required && value.is_empty() {
-            return Err(AppError::BadRequest(format!("{}不能为空", field.label)));
+            return Err(AppError::BadRequest(i18n_service::translate_with(
+                "error.field_required",
+                locale,
+                &[&field.label],
+            )));
         }
         result.insert(
             field.field,
@@ -398,6 +415,7 @@ async fn resolve_coupon_discount(
     code: Option<&str>,
     product_id: i64,
     total_cents: i64,
+    locale: &str,
 ) -> AppResult<(Option<i64>, i64)> {
     let Some(code) = code.map(str::trim).filter(|value| !value.is_empty()) else {
         return Ok((None, 0));
@@ -409,7 +427,7 @@ async fn resolve_coupon_discount(
     .bind(code)
     .fetch_optional(&mut **tx)
     .await?
-    .ok_or_else(|| AppError::BadRequest("优惠码不存在".to_string()))?;
+    .ok_or_else(|| user_err("error.coupon_not_found", locale))?;
     let coupon_id = coupon.get::<i64, _>("id");
     let scoped_count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM coupon_products WHERE coupon_id = ?")
@@ -425,17 +443,17 @@ async fn resolve_coupon_discount(
         .fetch_one(&mut **tx)
         .await?;
         if allowed == 0 {
-            return Err(AppError::BadRequest("此商品不可用该优惠码".to_string()));
+            return Err(user_err("error.coupon_product_mismatch", locale));
         }
     }
     let usage_limit = coupon.get::<i64, _>("usage_limit");
     let used_count = coupon.get::<i64, _>("used_count");
     if usage_limit > 0 && used_count >= usage_limit {
-        return Err(AppError::BadRequest("优惠码可用次数不足".to_string()));
+        return Err(user_err("error.coupon_exhausted", locale));
     }
     let min_amount = coupon.get::<i64, _>("min_amount_cents");
     if min_amount > 0 && total_cents < min_amount {
-        return Err(AppError::BadRequest("订单金额未达到优惠码门槛".to_string()));
+        return Err(user_err("error.coupon_minimum_not_met", locale));
     }
     let discount = coupon.get::<i64, _>("value_cents").min(total_cents);
     Ok((Some(coupon_id), discount))
@@ -464,7 +482,8 @@ pub async fn enqueue_job_tx(
 
 pub async fn bill_data(state: &AppState, order_no: &str) -> AppResult<BillData> {
     maybe_cancel_expired(state, order_no).await?;
-    let order = get_order_by_no(&state.pool, order_no).await?;
+    let locale = site_locale(state).await;
+    let order = get_order_by_no(&state.pool, order_no, &locale).await?;
     Ok(BillData {
         amount_display: money::format_cents(order.total_amount_cents),
         original_amount_display: money::format_cents(order.original_amount_cents),
@@ -477,7 +496,8 @@ pub async fn bill_data(state: &AppState, order_no: &str) -> AppResult<BillData> 
 
 pub async fn detail_data(state: &AppState, order_no: &str) -> AppResult<OrderDetailData> {
     maybe_cancel_expired(state, order_no).await?;
-    let order = get_order_by_no(&state.pool, order_no).await?;
+    let locale = site_locale(state).await;
+    let order = get_order_by_no(&state.pool, order_no, &locale).await?;
     let fulfillment = sqlx::query_as::<_, Fulfillment>(
         "SELECT id, order_id, type, status, payload, delivered_at FROM fulfillments WHERE order_id = ?",
     )
@@ -492,6 +512,7 @@ pub async fn detail_data(state: &AppState, order_no: &str) -> AppResult<OrderDet
 }
 
 pub async fn detail_data_by_id(state: &AppState, order_id: i64) -> AppResult<OrderDetailData> {
+    let locale = site_locale(state).await;
     let order: Order = sqlx::query_as(
         "SELECT id, order_no, status, currency, guest_email, guest_password, client_ip,
          original_amount_cents, coupon_discount_cents, wholesale_discount_cents, total_amount_cents,
@@ -501,7 +522,7 @@ pub async fn detail_data_by_id(state: &AppState, order_id: i64) -> AppResult<Ord
     .bind(order_id)
     .fetch_optional(&state.pool)
     .await?
-    .ok_or_else(|| AppError::NotFound("订单不存在".to_string()))?;
+    .ok_or_else(|| user_not_found("error.order_not_found", &locale))?;
     let fulfillment = sqlx::query_as::<_, Fulfillment>(
         "SELECT id, order_id, type, status, payload, delivered_at FROM fulfillments WHERE order_id = ?",
     )
@@ -519,8 +540,9 @@ pub async fn search_by_order_no(
     state: &AppState,
     form: SearchBySnForm,
 ) -> AppResult<OrderDetailData> {
+    let locale = site_locale(state).await;
     let _legacy_search_pwd = form.search_pwd.as_deref().unwrap_or_default();
-    let order = get_order_by_no(&state.pool, form.order_sn.trim()).await?;
+    let order = get_order_by_no(&state.pool, form.order_sn.trim(), &locale).await?;
     detail_data(state, &order.order_no).await
 }
 
@@ -528,13 +550,14 @@ pub async fn search_by_email(
     state: &AppState,
     form: SearchByEmailForm,
 ) -> AppResult<OrderListData> {
+    let locale = site_locale(state).await;
     if !form.email.contains('@') {
-        return Err(AppError::BadRequest("邮箱格式不正确".to_string()));
+        return Err(user_err("error.invalid_email", &locale));
     }
     let order_config = settings_service::order_config(state).await;
     let search_pwd = form.search_pwd.as_deref().unwrap_or_default().trim();
     if order_config.is_open_search_pwd && search_pwd.is_empty() {
-        return Err(AppError::BadRequest("查询密码不能为空".to_string()));
+        return Err(user_err("error.search_password_required", &locale));
     }
     let rows: Vec<Order> = if order_config.is_open_search_pwd {
         sqlx::query_as(
@@ -591,7 +614,8 @@ async fn orders_to_list(state: &AppState, rows: Vec<Order>) -> AppResult<OrderLi
 }
 
 pub async fn status_data(state: &AppState, order_no: &str) -> AppResult<OrderStatusData> {
-    let maybe_order = get_order_by_no(&state.pool, order_no).await;
+    let locale = site_locale(state).await;
+    let maybe_order = get_order_by_no(&state.pool, order_no, &locale).await;
     let order = match maybe_order {
         Ok(order) => order,
         Err(_) => {
@@ -606,7 +630,7 @@ pub async fn status_data(state: &AppState, order_no: &str) -> AppResult<OrderSta
     if order.status == models::ORDER_PENDING_PAYMENT {
         maybe_cancel_expired(state, order_no).await?;
     }
-    let order = get_order_by_no(&state.pool, order_no).await?;
+    let order = get_order_by_no(&state.pool, order_no, &locale).await?;
     if order.status == models::ORDER_PENDING_PAYMENT {
         return Ok(OrderStatusData {
             order_no: order.order_no,
@@ -647,7 +671,7 @@ pub async fn status_data(state: &AppState, order_no: &str) -> AppResult<OrderSta
     })
 }
 
-pub async fn get_order_by_no(pool: &SqlitePool, order_no: &str) -> AppResult<Order> {
+pub async fn get_order_by_no(pool: &SqlitePool, order_no: &str, locale: &str) -> AppResult<Order> {
     sqlx::query_as(
         "SELECT id, order_no, status, currency, guest_email, guest_password, client_ip,
          original_amount_cents, coupon_discount_cents, wholesale_discount_cents, total_amount_cents,
@@ -657,11 +681,12 @@ pub async fn get_order_by_no(pool: &SqlitePool, order_no: &str) -> AppResult<Ord
     .bind(order_no)
     .fetch_optional(pool)
     .await?
-    .ok_or_else(|| AppError::NotFound("订单不存在".to_string()))
+    .ok_or_else(|| user_not_found("error.order_not_found", locale))
 }
 
 pub async fn maybe_cancel_expired(state: &AppState, order_no: &str) -> AppResult<()> {
-    let order = get_order_by_no(&state.pool, order_no).await?;
+    let locale = site_locale(state).await;
+    let order = get_order_by_no(&state.pool, order_no, &locale).await?;
     if order.status == models::ORDER_PENDING_PAYMENT {
         if let Some(expires_at) = time::parse_rfc3339(&order.expires_at) {
             if expires_at <= time::now() {

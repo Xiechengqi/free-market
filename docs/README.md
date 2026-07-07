@@ -6,14 +6,12 @@
 
 ```bash
 # 1. 编译 release 二进制
-./build.sh                         # debug 构建；生产环境请用 cargo build --release
-# 或构建 Docker 镜像
-docker build -t free-market:latest .
+./build.sh --release
 
 # 2. 准备配置文件（参考 config.example.toml）
 cp config.example.toml config.toml
 # 重要：首次运行前请修改 admin.bootstrap_password（B2 防护）
-# 程序会自动创建 data/app.secret 用于加密敏感设置
+# 程序会自动创建 $HOME/.free-market/app.secret 用于加密敏感设置
 
 # 3. 启动
 ./target/release/free-market
@@ -24,15 +22,16 @@ cp config.example.toml config.toml
 
 TLS 终端**不归**本程序负责。推荐方案：前置 Cloudflare，程序在内网走 HTTP。程序会通过 `X-Forwarded-Proto: https` 检测 HTTPS，并自动给 Cookie 打上 `Secure` 标记。
 
-下面两种部署方式**二选一**。
-
-### A) Docker Compose + Cloudflare
+### systemd + Cloudflare
 
 ```bash
-docker compose up -d
+sudo cp target/release/free-market /opt/free-market/
+sudo cp deploy/free-market.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now free-market
 ```
 
-会在宿主机暴露 `8080` 端口。然后：
+可选前置 Cloudflare：
 
 1. **Cloudflare Tunnel**（`cloudflared`）—— 推荐：无需开放公网端口，无防火墙缺口。
    ```bash
@@ -49,17 +48,6 @@ docker compose up -d
 
 人机校验仅支持内置算术图形验证码（`/captcha/:id`）及邮箱/IP 下单频控，不支持 Geetest 极验。
 
-### B) systemd 单元 + Cloudflare 隧道
-
-```bash
-sudo cp target/release/free-market /opt/free-market/
-sudo cp deploy/free-market.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now free-market
-```
-
-再把 `cloudflared` 作为另一个 systemd 单元运行，指向 `http://127.0.0.1:8080`。不需要 nginx，也不需要在服务器上管理 TLS 证书。
-
 ## 首次启动必做项
 
 1. 访问 `http://your-host/install` —— 当 `bootstrap_password` 仍是默认值 `admin123456` 时，程序**拒绝**自动初始化管理员。使用 `/install` 创建一个强密码的 owner。若想强制保留旧的自动初始化行为（不推荐），设置 `FREEMARKET_ALLOW_DEFAULT_ADMIN=1`。
@@ -72,12 +60,14 @@ sudo systemctl enable --now free-market
 
 ## 配置参考
 
+表结构版本由 SQLite `PRAGMA user_version` 管理（当前应用支持 revision **14**，SQL 文件在仓库 `schema/` 目录）。升级已有库时，程序会在应用新 revision 前自动复制 `free-market.db.pre-schema-<时间戳>.bak` 备份；若库版本高于当前程序，将拒绝启动。
+
 | 文件 | 用途 |
 | --- | --- |
-| `config.toml` | 静态配置（监听 host/port、数据库路径、admin 路由前缀、bootstrap 管理员） |
-| `data/freemarket.db` | SQLite 数据库（WAL 模式 + 外键开启）。可在 `/admin/backup` 安全备份（一致性 SQLite 快照 gzip 流） |
-| `data/app.secret` | 自动生成的本地加密密钥，用于加密敏感设置。请与数据库、uploads 一并保留 |
-| `uploads/` | 商品图片及管理员上传的资源 |
+| `config.toml` | 静态配置（监听 host/port、数据库路径、admin 路由前缀、bootstrap 管理员）。默认可放在 `./config.toml` 或 `$HOME/.free-market/config.toml` |
+| `$HOME/.free-market/free-market.db` | SQLite 数据库（WAL 模式 + 外键开启）。可在 `/admin/backup` 安全备份（一致性 SQLite 快照 gzip 流） |
+| `$HOME/.free-market/app.secret` | 自动生成的本地加密密钥，用于加密敏感设置。请与数据库、uploads 一并保留 |
+| `$HOME/.free-market/uploads/` | 商品图片及管理员上传的资源 |
 | `logs/` | 应用日志（同时输出到 stdout） |
 
 环境变量：
@@ -92,31 +82,65 @@ sudo systemctl enable --now free-market
 ## 备份与恢复
 
 在 `/admin/backup` 可从后台界面发起手工备份，并在备份历史表中下载。
-默认开启计划备份：每周一服务器 UTC 时间 08:00 执行，保留 `data/backups/` 下最新的 7 份。
+默认开启计划备份：每周一服务器 UTC 时间 08:00 执行，保留 `$HOME/.free-market/backups/` 下最新的 7 份。
 
 ```bash
 # 在 UI 备份后，从 /admin/backup/files/<filename> 下载所选备份文件
 
 # 离线恢复
 systemctl stop free-market
-zcat backup.sqlite.gz > /opt/free-market/data/freemarket.db
+zcat backup.sqlite.gz > ~/.free-market/free-market.db
 systemctl start free-market
 ```
 
-数据库中的敏感字段通过 `data/app.secret` 中自动生成的本地密钥加密。迁移或恢复时，请将 `data/app.secret`、`data/freemarket.db`、`uploads/` 一并保留；丢失密钥可能导致加密的 SMTP、通知设置需要重新填写。
+数据库中的敏感字段通过 `$HOME/.free-market/app.secret` 中自动生成的本地密钥加密。备份恢复或搬迁站点时，请将 `app.secret`、`free-market.db`、`uploads/` 一并保留；丢失密钥可能导致加密的 SMTP、通知设置需要重新填写。
 
 ## 健康检查
 
 ```bash
 curl -s https://your-host/healthz
-# {"db":"ok","status":"ok","uptime_secs":1234,"version":"0.1.0","worker":"worker-…"}
+# {"db":"ok","status":"ok","schema_version":14,"schema_revision_max":14,"version":"0.1.0",...}
 
-./free-market --healthcheck
+./target/release/free-market healthcheck
+# 或 ./target/release/free-market --healthcheck
 # 配置的 SQLite 数据库可达时退出码为 0
+
+./target/release/free-market schema-version
+# 只读查看当前库的 schema revision，不启动 Web 服务、不应用待执行的 revision
 ```
 
 `status: degraded` + `db: down` 表示 SQLite ping 失败；程序仍保持运行，由负载均衡器决定如何处理。
-容器健康检查使用 `--healthcheck`，运行镜像不需要安装 curl 或 wget。
+systemd 探活可使用 `free-market healthcheck` 或 `free-market --healthcheck`，无需额外安装 curl。
+
+## CLI 工具
+
+除默认启动 Web 服务外，还支持：
+
+```bash
+free-market version          # 构建信息：package / commit / commit message / build time / target
+free-market schema-version   # 数据库 schema revision（只读）
+free-market healthcheck      # SQLite 连通性探活
+free-market config show      # 打印生效配置（敏感字段脱敏）
+free-market config path      # 打印实际加载的 config.toml 路径
+free-market admin list       # 列出管理员账户
+```
+
+`schema-version` 退出码：`0` = 已与当前程序对齐；`1` = 需要启动服务以应用待执行的 schema revision；`2` = 数据库 revision 高于当前程序（需升级 free-market）。
+
+术语说明：**schema revision** 指 SQLite 表结构版本（`PRAGMA user_version`，SQL 文件在 `schema/`）；与 dujiaoka 存量数据导入无关。
+
+## CI 自动构建
+
+推送到 `main` / `master` 分支时，GitHub Actions（`.github/workflows/build-release.yml`）会：
+
+1. 交叉编译 `free-market-linux-amd64` / `free-market-linux-arm64`（musl 静态链接）
+2. 更新滚动标签 **`latest`** Release，附带 `.sha256` 校验文件
+
+本地复现 CI 构建：
+
+```bash
+./build-ci.sh amd64   # 或 arm64（需 cargo-zigbuild + zig）
+```
 
 ## 运行测试
 
@@ -448,7 +472,7 @@ BSC USDC 合约：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`。
 - Alchemy 不同链、不同方法的免费额度和 block range 限制以 Alchemy 当前套餐为准；BNB Smart Chain 的 `eth_getLogs` 免费层建议保持 `log_scan_block_range = 10`。
 - 收款地址必须是用户自己控制的钱包地址；系统不会保存私钥，也不会自动归集。
 - 测试网通道会在支付 intent 中快照 `network_env=testnet`，订单详情会显示“测试网”标识，二维码文本会标注 TESTNET / no financial value。
-- 本功能只做链上入账识别，不迁移 TokenPay 的 TRON、私钥地址生成、自动归集、能量租用、独立网关 API 或自动退款。
+- 本功能只做链上入账识别，不承接 TokenPay 的 TRON、私钥地址生成、自动归集、能量租用、独立网关 API 或自动退款。
 - 建议配置多个静态收款地址。同金额订单会优先遍历地址池，所有地址都被占用后才微调最小识别金额。
 - watcher 会按 `channel + chain + token_contract + receive_address` 分组扫描，降低同地址多订单的 Alchemy RPC 消耗。
 - 已存在但没有 `scan_from_block` 的旧 intent 会被保护为从当前已确认高度之后开始扫描，避免历史同金额交易被误匹配；如升级前已有未支付的 EVM 订单，建议让用户重新生成支付单。
