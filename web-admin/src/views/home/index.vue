@@ -45,7 +45,7 @@ const cards = [
 
 <template>
   <NSpace vertical :size="16">
-    <NAlert title="Dujiao Rust 后台" type="info">
+    <NAlert title="freeMarket 后台" type="info">
       欢迎使用，访问 <code>/admin/api/*</code> 查看完整 JSON API。
     </NAlert>
 

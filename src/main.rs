@@ -1,6 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
-use dujiao_rust::{app, cli, config, jobs, services, state};
+use free_market::{app, cli, config, jobs, services, state};
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -18,7 +18,7 @@ async fn serve() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                "dujiao_rust=info,tower_http=info,axum::rejection=trace".into()
+                "free_market=info,tower_http=info,axum::rejection=trace".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer())
@@ -36,7 +36,7 @@ async fn serve() -> anyhow::Result<()> {
     let router = app::router(state.clone());
     let addr = SocketAddr::from((config.server.host, config.server.port));
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    tracing::info!("dujiao-rust listening on http://{}", listener.local_addr()?);
+    tracing::info!("free-market listening on http://{}", listener.local_addr()?);
     let shutdown_pool = state.pool.clone();
     axum::serve(
         listener,
@@ -46,7 +46,7 @@ async fn serve() -> anyhow::Result<()> {
     .await?;
     tracing::info!("shutdown signal received, draining db pool");
     shutdown_pool.close().await;
-    tracing::info!("dujiao-rust stopped cleanly");
+    tracing::info!("free-market stopped cleanly");
     Ok(())
 }
 

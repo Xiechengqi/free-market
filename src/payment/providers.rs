@@ -125,7 +125,7 @@ impl PaymentProvider for EpayProvider {
                 ("pid".to_string(), merchant_id),
                 ("type".to_string(), payment_type.clone()),
                 ("out_trade_no".to_string(), input.payment_no.clone()),
-                ("sitename".to_string(), "dujiao-rust".to_string()),
+                ("sitename".to_string(), "free-market".to_string()),
                 ("clientip".to_string(), input.client_ip),
                 ("device".to_string(), config_str_or(config, "device", "pc")),
             ]);
@@ -594,14 +594,14 @@ impl PaymentProvider for OkpayProvider {
     }
 }
 
-pub struct DujiaoPayProvider;
+pub struct FreeMarketPayProvider;
 
-const DUJIAOPAY_DEFAULT_BASE_URL: &str = "https://www.dujiaopay.com";
+const FREEMARKETPAY_DEFAULT_BASE_URL: &str = "https://www.freemarketpay.com";
 
 #[async_trait]
-impl PaymentProvider for DujiaoPayProvider {
+impl PaymentProvider for FreeMarketPayProvider {
     fn provider_type(&self) -> &'static str {
-        "dujiaopay"
+        "freemarketpay"
     }
 
     fn validate_config(&self, config: &Value, channel_type: &str) -> anyhow::Result<()> {
@@ -611,8 +611,8 @@ impl PaymentProvider for DujiaoPayProvider {
         } else {
             channel_type.trim().to_ascii_lowercase()
         };
-        if resolve_dujiaopay_chain(&token_id).is_empty() {
-            anyhow::bail!("dujiaopay unsupported token_id {token_id}");
+        if resolve_freemarketpay_chain(&token_id).is_empty() {
+            anyhow::bail!("freemarketpay unsupported token_id {token_id}");
         }
         Ok(())
     }
@@ -622,7 +622,7 @@ impl PaymentProvider for DujiaoPayProvider {
         config: &Value,
         input: CreatePaymentInput,
     ) -> anyhow::Result<CreatePaymentResult> {
-        let base = config_str_or(config, "api_base_url", DUJIAOPAY_DEFAULT_BASE_URL)
+        let base = config_str_or(config, "api_base_url", FREEMARKETPAY_DEFAULT_BASE_URL)
             .trim_end_matches('/')
             .to_string();
         let token_id = if input.channel_type.trim().is_empty() {
@@ -630,7 +630,7 @@ impl PaymentProvider for DujiaoPayProvider {
         } else {
             input.channel_type.trim().to_ascii_lowercase()
         };
-        let chain = config_str_or(config, "chain", &resolve_dujiaopay_chain(&token_id));
+        let chain = config_str_or(config, "chain", &resolve_freemarketpay_chain(&token_id));
         let payload = json!({
             "chain": chain,
             "token_id": token_id,
@@ -644,7 +644,7 @@ impl PaymentProvider for DujiaoPayProvider {
         let body = serde_json::to_vec(&payload)?;
         let ts = unix_ts();
         let nonce = random_hex(16);
-        let headers = dujiaopay_sign_headers(
+        let headers = freemarketpay_sign_headers(
             &str_config(config, "api_secret"),
             &str_config(config, "api_key_id"),
             "POST",
@@ -679,7 +679,7 @@ impl PaymentProvider for DujiaoPayProvider {
             .unwrap_or_default()
             .to_string();
         if checkout_url.is_empty() {
-            anyhow::bail!("dujiaopay response missing checkout_url");
+            anyhow::bail!("freemarketpay response missing checkout_url");
         }
         let provider_ref = source
             .get("order_id")
@@ -696,13 +696,13 @@ impl PaymentProvider for DujiaoPayProvider {
         body: &[u8],
     ) -> anyhow::Result<PaymentCallback> {
         let timestamp = header_str(headers, "DJP-Webhook-Timestamp")
-            .ok_or_else(|| anyhow::anyhow!("dujiaopay webhook missing timestamp"))?;
+            .ok_or_else(|| anyhow::anyhow!("freemarketpay webhook missing timestamp"))?;
         let signature = header_str(headers, "DJP-Webhook-Signature")
-            .ok_or_else(|| anyhow::anyhow!("dujiaopay webhook missing signature"))?;
+            .ok_or_else(|| anyhow::anyhow!("freemarketpay webhook missing signature"))?;
         let ts = timestamp.parse::<i64>()?;
         let now = unix_ts() as i64;
         if (now - ts).abs() > 300 {
-            anyhow::bail!("dujiaopay webhook timestamp outside tolerance");
+            anyhow::bail!("freemarketpay webhook timestamp outside tolerance");
         }
         let mut mac =
             <Hmac<Sha256> as Mac>::new_from_slice(str_config(config, "webhook_secret").as_bytes())?;
@@ -712,7 +712,7 @@ impl PaymentProvider for DujiaoPayProvider {
         let expected = hex_lower(&mac.finalize().into_bytes());
         let got = signature.trim().trim_start_matches("sha256=");
         if !expected.eq_ignore_ascii_case(got) {
-            anyhow::bail!("dujiaopay webhook signature mismatch");
+            anyhow::bail!("freemarketpay webhook signature mismatch");
         }
         let value = parse_json_object(body)?;
         let event_type = value
@@ -1386,7 +1386,7 @@ fn resolve_bepusdt_trade_type(channel_type: &str) -> String {
     }
 }
 
-fn resolve_dujiaopay_chain(token_id: &str) -> String {
+fn resolve_freemarketpay_chain(token_id: &str) -> String {
     match token_id.trim().to_ascii_lowercase().as_str() {
         "tron-trx" | "tron-usdt" => "tron",
         "ethereum-eth" | "ethereum-usdt" | "ethereum-usdc" => "ethereum",
@@ -1483,7 +1483,7 @@ fn okpay_sign(params: &[(String, String)], token: &str) -> String {
     .to_ascii_uppercase()
 }
 
-fn dujiaopay_sign_headers(
+fn freemarketpay_sign_headers(
     secret: &str,
     key_id: &str,
     method: &str,

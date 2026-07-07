@@ -65,7 +65,7 @@ const badge = computed(() => payCheckBadge(raw.value));
 .payment-badge-preview-tokenpay,
 .payment-badge-preview-epusdt,
 .payment-badge-preview-bepusdt,
-.payment-badge-preview-dujiaopay,
+.payment-badge-preview-freemarketpay,
 .payment-badge-preview-okpay,
 .payment-badge-preview-usdt,
 .payment-badge-preview-usdc,

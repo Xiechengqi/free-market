@@ -7,17 +7,17 @@ pub async fn bootstrap(state: &AppState) -> anyhow::Result<()> {
     let admin_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM admins")
         .fetch_one(&state.pool)
         .await?;
-    let force_install = std::env::var("DUJIAO_ENABLE_INSTALL")
+    let force_install = std::env::var("FREEMARKET_ENABLE_INSTALL")
         .is_ok_and(|value| value == "1" || value.eq_ignore_ascii_case("true"));
     let default_password = state.config.admin.bootstrap_password.trim() == "admin123456";
-    let allow_auto_seed = std::env::var("DUJIAO_ALLOW_DEFAULT_ADMIN")
+    let allow_auto_seed = std::env::var("FREEMARKET_ALLOW_DEFAULT_ADMIN")
         .is_ok_and(|value| value == "1" || value.eq_ignore_ascii_case("true"));
     if admin_count == 0 {
         if force_install || (default_password && !allow_auto_seed) {
             tracing::warn!(
                 "no admin exists and bootstrap_password is the well-known default; \
                  visit /install to create the first administrator. \
-                 Set DUJIAO_ALLOW_DEFAULT_ADMIN=1 to skip this guard."
+                 Set FREEMARKET_ALLOW_DEFAULT_ADMIN=1 to skip this guard."
             );
         } else {
             let hash = password::hash_password(&state.config.admin.bootstrap_password)?;
@@ -56,7 +56,7 @@ pub async fn bootstrap(state: &AppState) -> anyhow::Result<()> {
             "INSERT INTO products(category_id, slug, name, short_description, description_html,
              retail_price_cents, price_cents, fulfillment_type, buy_limit_num, is_active, sort_order, created_at, updated_at)
              VALUES (?, 'aws-demo', 'AWS 25刀优惠码 21号 2026.12.31到期 可使用2个', '自动发卡演示商品',
-             '这是 Dujiao Rust 初始化的演示商品。', 9500, 9500, 'auto', 0, 1, 100, ?, ?)",
+             '这是 freeMarket 初始化的演示商品。', 9500, 9500, 'auto', 0, 1, 100, ?, ?)",
         )
         .bind(category_id)
         .bind(&now)
@@ -123,7 +123,7 @@ pub async fn bootstrap(state: &AppState) -> anyhow::Result<()> {
                 "username": "",
                 "password": "",
                 "from_email": "",
-                "from_name": "Dujiao Rust",
+                "from_name": "freeMarket",
                 "encryption": "starttls"
             })
             .to_string(),

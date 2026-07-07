@@ -10,7 +10,7 @@ use rand::RngCore;
 
 use crate::state::AppState;
 
-pub const CSRF_COOKIE: &str = "dujiao_csrf";
+pub const CSRF_COOKIE: &str = "freemarket_csrf";
 
 /// Max body size we'll buffer just to extract `_csrf` from a urlencoded form.
 /// Larger bodies are rejected back to the user with 413 by the global

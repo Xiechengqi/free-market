@@ -1,6 +1,6 @@
-# dujiao-rust web-admin
+# free-market web-admin
 
-The Vue3 + NaiveUI + UnoCSS single-page admin shell for **dujiao-rust**.
+The Vue3 + NaiveUI + UnoCSS single-page admin shell for **free-market**.
 
 This directory builds to `web-admin/dist/`, which the Rust binary embeds via
 `rust-embed` and serves under `/admin/`. There is no separate frontend
@@ -17,14 +17,14 @@ service — `cargo build --release` runs `pnpm -C web-admin build` first (see
 Originally forked from
 [SoybeanAdmin](https://github.com/soybeanjs/soybean-admin) v2.2.0. Most of the
 layout, theme drawer, and tooling code is unchanged; the business pages,
-brand wiring (`useSiteInfoStore`), setup wizard, and auth flow are dujiao
+brand wiring (`useSiteInfoStore`), setup wizard, and auth flow are freeMarket
 specific.
 
 ## Development
 
 ```sh
 pnpm install
-pnpm dev          # vite, talks to a local dujiao-rust on http://localhost:8080
+pnpm dev          # vite, talks to a local free-market on http://localhost:8080
 pnpm build        # produces dist/ for the Rust binary to embed
 pnpm typecheck
 pnpm lint

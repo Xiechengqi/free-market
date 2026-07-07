@@ -1,5 +1,5 @@
 /**
- * Thin axios wrappers for the dujiao-rust admin JSON API.
+ * Thin axios wrappers for the free-market admin JSON API.
  *
  * Every call goes through `@/service/request`, which already strips the
  * `{code, msg, data}` envelope (data is returned via `.data`). The shared

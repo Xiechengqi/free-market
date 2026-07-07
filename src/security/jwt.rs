@@ -39,7 +39,7 @@ impl Jwt {
     pub fn from_app_secret(secret: &str) -> Self {
         // 256-bit HS256 key derived from app_secret (same root of trust as SecretBox)
         let mut h = Sha256::new();
-        h.update(b"dujiao-rust/jwt/v1/");
+        h.update(b"free-market/jwt/v2/");
         h.update(secret.as_bytes());
         let key = h.finalize();
         Self {

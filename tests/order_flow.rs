@@ -1,6 +1,6 @@
 mod common;
 
-use dujiao_rust::services::{order_service, payment_service};
+use free_market::services::{order_service, payment_service};
 
 /// Under heavy contention the invariant is "no oversell": total reserved cards must
 /// equal the number of successful orders, and no card may belong to more than one

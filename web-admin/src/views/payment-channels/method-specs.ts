@@ -145,7 +145,7 @@ export function payCheckBadge(value?: string) {
       return 'EUS';
     case 'bepusdt':
       return 'BUS';
-    case 'dujiaopay':
+    case 'freemarketpay':
       return 'DJP';
     case 'okpay':
       return 'OK';
@@ -757,9 +757,9 @@ export const METHOD_SPECS: MethodSpec[] = [
     ]
   },
   {
-    id: 'dujiaopay',
-    label: 'DujiaoPay',
-    providerType: 'dujiaopay',
+    id: 'freemarketpay',
+    label: 'FreeMarketPay',
+    providerType: 'freemarketpay',
     channelType: {
       kind: 'select',
       default: 'tron-usdt',
@@ -786,7 +786,7 @@ export const METHOD_SPECS: MethodSpec[] = [
     },
     payCheckDefault: 'usdt',
     interactionDefault: 'redirect',
-    docsAnchor: 'DujiaoPay 通道',
+    docsAnchor: 'FreeMarketPay 通道',
     hint: '多链虚拟币收款 SaaS。channel_type 即 token_id。',
     fields: [
       {
@@ -795,9 +795,9 @@ export const METHOD_SPECS: MethodSpec[] = [
         type: 'text',
         required: true,
         group: 'basic',
-        default: 'https://www.dujiaopay.com',
-        placeholder: 'https://www.dujiaopay.com',
-        help: 'DujiaoPay 官方网关；自托管时改成自己的 HTTPS 入口'
+        default: 'https://www.freemarketpay.com',
+        placeholder: 'https://www.freemarketpay.com',
+        help: 'FreeMarketPay 官方网关；自托管时改成自己的 HTTPS 入口'
       },
       {
         key: 'api_key_id',

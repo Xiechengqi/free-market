@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { SetupStoreId } from '@/enum';
-import { fetchSiteInfo } from '@/service/api/dujiao';
+import { fetchSiteInfo } from '@/service/api/freemarket';
 
 /**
  * Centralized brand info. Reads from the backend on app startup so the
@@ -13,7 +13,7 @@ import { fetchSiteInfo } from '@/service/api/dujiao';
  * back to the bundled default (assets/imgs/logo.jpg).
  */
 export const useSiteInfoStore = defineStore(SetupStoreId.SiteInfo, () => {
-  const fallback = (import.meta.env.VITE_APP_TITLE as string) || 'Dujiao Rust';
+  const fallback = (import.meta.env.VITE_APP_TITLE as string) || 'freeMarket';
   const name = ref(fallback);
   const logoText = ref(fallback);
   const imgLogo = ref('');

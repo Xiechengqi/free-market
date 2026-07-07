@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { NButton, NSpin, NUpload, type UploadFileInfo, useMessage } from 'naive-ui';
-import { uploadFile } from '@/service/api/dujiao';
+import { uploadFile } from '@/service/api/freemarket';
 
 defineOptions({ name: 'UploadPicker' });
 

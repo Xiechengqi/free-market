@@ -2,7 +2,7 @@ mod common;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use dujiao_rust::web::router::router;
+use free_market::web::router::router;
 use tower::ServiceExt;
 
 #[tokio::test]

@@ -7,7 +7,7 @@ use sqlx::{Row, SqlitePool};
 use crate::{config::AppConfig, db, security::password};
 
 #[derive(Debug, Parser)]
-#[command(name = "dujiao-rust", version, about = "Dujiao Rust 自助发卡后端")]
+#[command(name = "free-market", version, about = "freeMarket 自助发卡后端")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
@@ -121,9 +121,9 @@ fn run_config(action: ConfigAction) -> anyhow::Result<()> {
             print!("{rendered}");
         }
         ConfigAction::Path => {
-            let explicit = std::env::var("DUJIAO_CONFIG").ok();
+            let explicit = std::env::var("FREEMARKET_CONFIG").ok();
             if let Some(p) = explicit {
-                println!("{p}  (DUJIAO_CONFIG)");
+                println!("{p}  (FREEMARKET_CONFIG)");
                 return Ok(());
             }
             for candidate in default_config_candidates() {
@@ -141,7 +141,7 @@ fn run_config(action: ConfigAction) -> anyhow::Result<()> {
 fn default_config_candidates() -> Vec<std::path::PathBuf> {
     let mut out = vec![std::path::PathBuf::from("config.toml")];
     if let Some(home) = std::env::var_os("HOME").filter(|s| !s.is_empty()) {
-        out.push(std::path::PathBuf::from(home).join(".dujiao/config.toml"));
+        out.push(std::path::PathBuf::from(home).join(".freemarket/config.toml"));
     }
     out
 }

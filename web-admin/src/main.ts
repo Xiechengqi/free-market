@@ -22,7 +22,7 @@ async function setupApp() {
   setupStore(app);
 
   // Brand info needs to load before the login splash / header titles render so
-  // we don't flash the default "Dujiao Rust" placeholder.
+  // we don't flash the default "freeMarket" placeholder.
   await useSiteInfoStore().init();
 
   await setupRouter(app);

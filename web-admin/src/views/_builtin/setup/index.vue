@@ -43,8 +43,8 @@ const model: SetupModel = reactive({
   displayName: 'Administrator',
   password: '',
   passwordConfirm: '',
-  siteName: '独角数卡',
-  logoText: 'Dujiao Rust'
+  siteName: 'freeMarket',
+  logoText: 'freeMarket'
 });
 
 const rules = computed(() => ({
@@ -111,7 +111,7 @@ onMounted(refreshStatus);
     <NCard class="setup-card" :bordered="false">
       <NSpin :show="checking">
         <div class="setup-header">
-          <NH2 style="margin:0">Dujiao Rust 初始化</NH2>
+          <NH2 style="margin:0">freeMarket 初始化</NH2>
           <p style="color:#888;margin-top:4px">系统首次运行，创建第一个 owner 管理员</p>
         </div>
 
@@ -128,10 +128,10 @@ onMounted(refreshStatus);
           require-mark-placement="right-hanging"
         >
           <NFormItem label="站点名称" path="siteName">
-            <NInput v-model:value="model.siteName" placeholder="独角数卡" />
+            <NInput v-model:value="model.siteName" placeholder="freeMarket" />
           </NFormItem>
           <NFormItem label="Logo 文案" path="logoText">
-            <NInput v-model:value="model.logoText" placeholder="Dujiao Rust" />
+            <NInput v-model:value="model.logoText" placeholder="freeMarket" />
           </NFormItem>
           <NFormItem label="用户名" path="userName">
             <NInput v-model:value="model.userName" placeholder="admin" />

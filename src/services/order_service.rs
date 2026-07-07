@@ -324,7 +324,7 @@ pub fn order_cookie_value(headers: &HeaderMap, order_no: &str) -> String {
     let mut orders = headers
         .get(header::COOKIE)
         .and_then(|value| value.to_str().ok())
-        .and_then(extract_dujiaoka_orders)
+        .and_then(extract_browser_order_cookies)
         .unwrap_or_default();
     if !orders.iter().any(|item| item == order_no) {
         orders.push(order_no.to_string());
@@ -336,12 +336,12 @@ pub fn order_cookie_value(headers: &HeaderMap, order_no: &str) -> String {
     serde_json::to_string(&orders).unwrap_or_else(|_| "[]".to_string())
 }
 
-pub fn extract_dujiaoka_orders(cookie_header: &str) -> Option<Vec<String>> {
+pub fn extract_browser_order_cookies(cookie_header: &str) -> Option<Vec<String>> {
     cookie_header.split(';').find_map(|part| {
         let mut kv = part.trim().splitn(2, '=');
         let key = kv.next()?.trim();
         let value = kv.next()?.trim();
-        if key != "dujiaoka_orders" && key != "dujiao_orders" {
+        if key != "freemarket_orders" && key != "dujiao_orders" && key != "dujiaoka_orders" {
             return None;
         }
         let decoded = percent_decode(value);
@@ -568,7 +568,7 @@ pub async fn search_by_browser(state: &AppState, headers: &HeaderMap) -> AppResu
     else {
         return Ok(OrderListData { orders: Vec::new() });
     };
-    let Some(order_nos) = extract_dujiaoka_orders(cookie_header) else {
+    let Some(order_nos) = extract_browser_order_cookies(cookie_header) else {
         return Ok(OrderListData { orders: Vec::new() });
     };
     let mut orders = Vec::new();

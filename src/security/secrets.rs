@@ -143,7 +143,7 @@ pub fn is_encrypted(value: &str) -> bool {
 
 fn derive_key(secret: &str) -> [u8; 32] {
     let mut hasher = Sha256::new();
-    hasher.update(b"dujiao-rust/v1/");
+    hasher.update(b"free-market/v2/");
     hasher.update(secret.as_bytes());
     hasher.finalize().into()
 }

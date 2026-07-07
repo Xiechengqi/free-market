@@ -57,7 +57,7 @@ pub async fn create_order(
     let order_no = order_service::create_guest_order(&state, form, ip).await?;
     let cookie_value = order_service::order_cookie_value(&headers, &order_no);
     let cookie = format!(
-        "dujiaoka_orders={}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000",
+        "freemarket_orders={}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000",
         percent_encode_cookie(&cookie_value)
     );
     let mut response = Redirect::to(&format!("/bill/{}", order_no)).into_response();
@@ -272,7 +272,7 @@ pub async fn provider_callback_post(
 ) -> AppResult<String> {
     let params = parse_callback_body(&headers, &body)?;
     match provider.to_ascii_lowercase().as_str() {
-        "stripe" | "paypal" | "dujiaopay" | "wechat" | "wxpay" => {
+        "stripe" | "paypal" | "freemarketpay" | "wechat" | "wxpay" => {
             payment_service::provider_webhook(&state, &provider, &headers, &body).await
         }
         _ => dispatch_provider_callback_with_body(&state, &provider, &params, &body).await,

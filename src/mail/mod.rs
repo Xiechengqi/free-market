@@ -319,7 +319,7 @@ fn default_smtp_port() -> u16 {
 }
 
 fn default_from_name() -> String {
-    "Dujiao Rust".to_string()
+    "freeMarket".to_string()
 }
 
 fn default_encryption() -> String {

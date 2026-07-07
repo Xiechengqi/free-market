@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::payment::{
     provider::PaymentProvider,
     providers::{
-        AlipayProvider, BepusdtProvider, DujiaoPayProvider, EpayProvider, EpusdtProvider,
+        AlipayProvider, BepusdtProvider, FreeMarketPayProvider, EpayProvider, EpusdtProvider,
         NoopProvider, OkpayProvider, PaypalProvider, StripeProvider, TokenPayProvider,
         WechatPayProvider,
     },
@@ -23,7 +23,7 @@ impl PaymentRegistry {
         providers.insert("tokenpay:".to_string(), Arc::new(TokenPayProvider));
         providers.insert("epusdt:".to_string(), Arc::new(EpusdtProvider));
         providers.insert("bepusdt:".to_string(), Arc::new(BepusdtProvider));
-        providers.insert("dujiaopay:".to_string(), Arc::new(DujiaoPayProvider));
+        providers.insert("freemarketpay:".to_string(), Arc::new(FreeMarketPayProvider));
         providers.insert("okpay:".to_string(), Arc::new(OkpayProvider));
         providers.insert("official:stripe".to_string(), Arc::new(StripeProvider));
         providers.insert("official:paypal".to_string(), Arc::new(PaypalProvider));

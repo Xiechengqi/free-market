@@ -542,48 +542,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
-name = "dujiao-rust"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "argon2",
- "async-trait",
- "axum",
- "base64",
- "chrono",
- "clap",
- "flate2",
- "hmac",
- "jsonwebtoken",
- "lettre",
- "md5",
- "mime_guess",
- "minijinja",
- "pulldown-cmark",
- "qrcode",
- "rand 0.8.6",
- "reqwest",
- "rpassword",
- "rsa",
- "rust-embed",
- "serde",
- "serde_json",
- "sha2",
- "signature",
- "sqlx",
- "tempfile",
- "thiserror",
- "tokio",
- "toml",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "either"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -716,6 +674,48 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "free-market"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "argon2",
+ "async-trait",
+ "axum",
+ "base64",
+ "chrono",
+ "clap",
+ "flate2",
+ "hmac",
+ "jsonwebtoken",
+ "lettre",
+ "md5",
+ "mime_guess",
+ "minijinja",
+ "pulldown-cmark",
+ "qrcode",
+ "rand 0.8.6",
+ "reqwest",
+ "rpassword",
+ "rsa",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "sha2",
+ "signature",
+ "sqlx",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "toml",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

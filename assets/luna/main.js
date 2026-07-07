@@ -30,7 +30,7 @@
         tokenpay   : '<span class="payment-badge payment-badge-tokenpay">TP</span>',
         epusdt     : '<span class="payment-badge payment-badge-epusdt">EUS</span>',
         bepusdt    : '<span class="payment-badge payment-badge-bepusdt">BUS</span>',
-        dujiaopay  : '<span class="payment-badge payment-badge-dujiaopay">DJP</span>',
+        freemarketpay  : '<span class="payment-badge payment-badge-freemarketpay">DJP</span>',
         okpay      : '<span class="payment-badge payment-badge-okpay">OK</span>',
         usdt       : '<span class="payment-badge payment-badge-usdt">USDT</span>',
         usdc       : '<span class="payment-badge payment-badge-usdc">USDC</span>',

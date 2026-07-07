@@ -9,7 +9,7 @@ use rand::RngCore;
 
 use crate::{security::password, services::settings_service, state::AppState, time};
 
-const ADMIN_SESSION_COOKIE: &str = "dujiao_admin_session";
+const ADMIN_SESSION_COOKIE: &str = "freemarket_admin_session";
 
 #[derive(Debug, Clone)]
 pub struct AdminContext {

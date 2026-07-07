@@ -1,15 +1,15 @@
 [Unit]
-Description=Dujiao Rust (single-binary order/card system)
+Description=freeMarket (single-binary order/card system)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=dujiao
-Group=dujiao
-WorkingDirectory=/opt/dujiao-rust
-Environment=DUJIAO_CONFIG=/opt/dujiao-rust/config.toml
-ExecStart=/opt/dujiao-rust/dujiao-rust
+User=freemarket
+Group=freemarket
+WorkingDirectory=/opt/free-market
+Environment=FREEMARKET_CONFIG=/opt/free-market/config.toml
+ExecStart=/opt/free-market/free-market
 Restart=on-failure
 RestartSec=3s
 # Graceful shutdown — process traps SIGTERM and drains the SQLite pool.
@@ -22,7 +22,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/dujiao-rust/data /opt/dujiao-rust/uploads /opt/dujiao-rust/logs
+ReadWritePaths=/opt/free-market/data /opt/free-market/uploads /opt/free-market/logs
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

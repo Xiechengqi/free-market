@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use sqlx::SqlitePool;
 
-use dujiao_rust::{
+use free_market::{
     config::{AdminConfig, AppConfig, DatabaseConfig, ServerConfig, SiteConfig},
     db,
     security::{jwt::Jwt, secrets::SecretManager, session},
@@ -18,7 +18,7 @@ pub struct TestEnv {
 
 pub async fn boot() -> TestEnv {
     let tempdir = tempfile::tempdir().expect("tempdir");
-    let db_path = tempdir.path().join("dujiao-test.db");
+    let db_path = tempdir.path().join("freemarket-test.db");
     let config = AppConfig {
         server: ServerConfig {
             host: "127.0.0.1".parse().unwrap(),
@@ -164,7 +164,7 @@ pub async fn count_card_status(pool: &SqlitePool, status: &str) -> i64 {
 pub async fn create_payment_for(state: &AppState, order_no: &str) -> i64 {
     let headers = axum::http::HeaderMap::new();
     let payment =
-        dujiao_rust::services::payment_service::create_payment(state, order_no, 1, &headers)
+        free_market::services::payment_service::create_payment(state, order_no, 1, &headers)
             .await
             .expect("create payment");
     let payment_id: i64 = sqlx::query_scalar("SELECT id FROM payments WHERE payment_no = ?")

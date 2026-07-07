@@ -1,4 +1,4 @@
 export * from './auth';
-export * from './dujiao';
+export * from './freemarket';
 export * from './route';
 export * from './setup';

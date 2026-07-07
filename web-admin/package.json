@@ -1,9 +1,9 @@
 {
-  "name": "dujiao-rust-admin",
+  "name": "free-market-admin",
   "version": "0.1.0",
-  "description": "Dujiao Rust admin SPA — Vue3 + NaiveUI + UnoCSS (forked from soybean-admin).",
+  "description": "freeMarket admin SPA — Vue3 + NaiveUI + UnoCSS (forked from soybean-admin).",
   "keywords": [
-    "dujiao",
+    "freemarket",
     "rust",
     "TypeScript",
     "UnoCSS",
@@ -13,7 +13,7 @@
   ],
   "license": "MIT",
   "author": {
-    "name": "Dujiao Rust"
+    "name": "freeMarket"
   },
   "type": "module",
   "scripts": {

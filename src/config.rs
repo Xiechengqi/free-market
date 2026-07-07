@@ -62,17 +62,17 @@ pub struct AdminConfig {
 impl AppConfig {
     pub fn load() -> anyhow::Result<Self> {
         // Priority:
-        //   1. $DUJIAO_CONFIG (explicit override)
+        //   1. $FREEMARKET_CONFIG (explicit override)
         //   2. ./config.toml in CWD (common when running from the project dir)
-        //   3. $HOME/.dujiao/config.toml (matches the default data dir)
-        let explicit = std::env::var("DUJIAO_CONFIG").ok();
+        //   3. $HOME/.freemarket/config.toml (matches the default data dir)
+        let explicit = std::env::var("FREEMARKET_CONFIG").ok();
         let candidates: Vec<PathBuf> = explicit
             .as_deref()
             .map(|p| vec![PathBuf::from(p)])
             .unwrap_or_else(|| {
                 let mut paths = vec![PathBuf::from("config.toml")];
                 if let Some(home) = home_dir() {
-                    paths.push(home.join(".dujiao").join("config.toml"));
+                    paths.push(home.join(".freemarket").join("config.toml"));
                 }
                 paths
             });
@@ -100,11 +100,11 @@ impl AppConfig {
     }
 }
 
-/// `$HOME/.dujiao` on unix, falling back to CWD-relative `./.dujiao` if HOME isn't set.
+/// `$HOME/.freemarket` on unix, falling back to CWD-relative `./.freemarket` if HOME isn't set.
 pub fn default_data_dir() -> PathBuf {
     home_dir()
-        .map(|home| home.join(".dujiao"))
-        .unwrap_or_else(|| PathBuf::from(".dujiao"))
+        .map(|home| home.join(".freemarket"))
+        .unwrap_or_else(|| PathBuf::from(".freemarket"))
 }
 
 fn home_dir() -> Option<PathBuf> {
@@ -122,12 +122,12 @@ impl Default for AppConfig {
                 run_worker: true,
             },
             database: DatabaseConfig {
-                path: default_data_dir().join("dujiao.db"),
+                path: default_data_dir().join("freemarket.db"),
             },
             site: SiteConfig {
-                name: "独角数卡".to_string(),
-                logo_text: "Dujiao Rust".to_string(),
-                notice: "欢迎使用 Dujiao Rust。".to_string(),
+                name: "freeMarket".to_string(),
+                logo_text: "freeMarket".to_string(),
+                notice: "欢迎使用 freeMarket。".to_string(),
                 footer: String::new(),
                 base_url: "http://0.0.0.0:8080".to_string(),
                 theme: "luna".to_string(),
@@ -155,7 +155,7 @@ impl AppConfig {
         if !cfg.is_empty() {
             return cfg;
         }
-        if let Ok(env) = std::env::var("DUJIAO_APP_SECRET") {
+        if let Ok(env) = std::env::var("FREEMARKET_APP_SECRET") {
             let trimmed = env.trim().to_string();
             if !trimmed.is_empty() {
                 return trimmed;

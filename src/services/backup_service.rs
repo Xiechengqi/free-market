@@ -228,7 +228,7 @@ async fn create_snapshot(state: &AppState) -> AppResult<PathBuf> {
         .await
         .map_err(|err| AppError::Anyhow(err.into()))?;
     let temp_path = temp_dir.join(format!(
-        "dujiao-backup-{}.sqlite",
+        "freemarket-backup-{}.sqlite",
         uuid::Uuid::new_v4().simple()
     ));
     let temp_sql = sqlite_string_literal(&temp_path.to_string_lossy());
@@ -267,7 +267,7 @@ fn backup_dir(state: &AppState) -> PathBuf {
 
 fn backup_filename(kind: &str) -> String {
     format!(
-        "dujiao-backup-{}-{}.sqlite.gz",
+        "freemarket-backup-{}-{}.sqlite.gz",
         kind,
         crate::time::now_str().replace(':', "-")
     )
@@ -278,7 +278,7 @@ fn sqlite_string_literal(value: &str) -> String {
 }
 
 fn valid_backup_filename(filename: &str) -> bool {
-    filename.starts_with("dujiao-backup-")
+    filename.starts_with("freemarket-backup-")
         && filename.ends_with(".sqlite.gz")
         && !filename.contains('/')
         && !filename.contains('\\')

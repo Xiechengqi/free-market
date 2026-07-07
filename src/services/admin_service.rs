@@ -3570,7 +3570,7 @@ fn merge_payment_config(form: &PaymentChannelForm) -> AppResult<String> {
         "bepusdt" => {
             insert_if_missing(object, "auth_token", merchant_key);
         }
-        "dujiaopay" => {
+        "freemarketpay" => {
             insert_if_missing(object, "api_key_id", merchant_id);
             insert_if_missing(object, "api_secret", merchant_key);
             insert_if_missing(object, "api_base_url", merchant_pem);
@@ -3763,7 +3763,7 @@ fn parse_smtp_settings(raw: Option<&str>) -> SmtpSettings {
         from_name: value
             .get("from_name")
             .and_then(|value| value.as_str())
-            .unwrap_or("Dujiao Rust")
+            .unwrap_or("freeMarket")
             .to_string(),
         encryption: value
             .get("encryption")

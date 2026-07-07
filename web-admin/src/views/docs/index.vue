@@ -2,7 +2,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { NCard, NSpin, useMessage } from 'naive-ui';
-import { fetchDocs } from '@/service/api/dujiao';
+import { fetchDocs } from '@/service/api/freemarket';
 
 defineOptions({ name: 'DocsPage' });
 
