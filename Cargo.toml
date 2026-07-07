@@ -20,7 +20,7 @@ chrono = { version = "0.4", features = ["serde"] }
 flate2 = "1"
 hmac = "0.12"
 jsonwebtoken = "9"
-lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-native-tls"] }
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls-tls"] }
 md5 = "0.7"
 mime_guess = "2"
 minijinja = { version = "2", features = ["loader", "json"] }
