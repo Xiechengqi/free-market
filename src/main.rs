@@ -7,14 +7,13 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = cli::Cli::parse();
-    let should_serve = cli::dispatch(args).await?;
-    if !should_serve {
-        return Ok(());
+    match cli::dispatch(args).await? {
+        None => Ok(()),
+        Some(opts) => serve(opts).await,
     }
-    serve().await
 }
 
-async fn serve() -> anyhow::Result<()> {
+async fn serve(opts: cli::ServeOptions) -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
@@ -24,7 +23,13 @@ async fn serve() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let config = config::AppConfig::load().context("load config")?;
+    let mut config = config::AppConfig::load().context("load config")?;
+    if let Some(host) = opts.host {
+        config.server.host = host;
+    }
+    if let Some(port) = opts.port {
+        config.server.port = port;
+    }
     let state = state::AppState::build(config.clone()).await?;
     services::bootstrap::bootstrap(&state).await?;
 

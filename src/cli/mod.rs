@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, net::IpAddr};
 
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
@@ -7,32 +7,39 @@ use sqlx::{Row, SqlitePool};
 use crate::{build_info, config::AppConfig, db, security::password};
 
 #[derive(Debug, Parser)]
-#[command(name = "free-market", version, about = "freeMarket 自助发卡后端")]
+#[command(name = "free-market", version, about = "freeMarket self-service card shop backend")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
 
-    /// 仅检查数据库连通性，用于 systemd 探活或 `free-market healthcheck`。
+    /// Check database connectivity only (for systemd probes or `free-market healthcheck`).
     #[arg(long, hide = true)]
     pub healthcheck: bool,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// 启动 Web 服务（默认行为）。
-    Serve,
-    /// 检查数据库连通性，成功返回 0。
+    /// Start the web server (default when no subcommand is given).
+    Serve {
+        /// TCP listen address (overrides config).
+        #[arg(long, default_value = "0.0.0.0")]
+        host: IpAddr,
+        /// TCP listen port (overrides config).
+        #[arg(long)]
+        port: Option<u16>,
+    },
+    /// Check database connectivity; exits 0 on success.
     Healthcheck,
-    /// 打印构建版本信息（commit、构建时间等）。
+    /// Print build metadata (commit, build time, etc.).
     Version,
-    /// 查看数据库 schema revision（不修改数据库、不启动 Web 服务）。
+    /// Show database schema revision (read-only; does not start the web server).
     SchemaVersion,
-    /// 查看运行配置。
+    /// Inspect runtime configuration.
     Config {
         #[command(subcommand)]
         action: ConfigAction,
     },
-    /// 管理员账户维护。
+    /// Manage administrator accounts.
     Admin {
         #[command(subcommand)]
         action: AdminAction,
@@ -41,23 +48,23 @@ pub enum Command {
 
 #[derive(Debug, Subcommand)]
 pub enum ConfigAction {
-    /// 打印当前生效的配置（敏感字段会脱敏）。
+    /// Print the effective configuration (sensitive fields are redacted).
     Show,
-    /// 打印实际加载的 config 文件路径，未找到则提示。
+    /// Print the config file path in use, or a hint when none was found.
     Path,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum AdminAction {
-    /// 列出全部管理员。
+    /// List all administrators.
     List,
-    /// 重置管理员密码；未传 --password 则交互式输入并要求二次确认。
+    /// Reset an administrator password; prompts twice when --password is omitted.
     ResetPassword {
         username: String,
         #[arg(long)]
         password: Option<String>,
     },
-    /// 创建一个管理员。未传 --password 则交互输入。
+    /// Create an administrator. Prompts for a password when --password is omitted.
     Create {
         username: String,
         #[arg(long, default_value = "owner")]
@@ -67,40 +74,51 @@ pub enum AdminAction {
         #[arg(long)]
         password: Option<String>,
     },
-    /// 启用管理员账户。
+    /// Enable an administrator account.
     Activate { username: String },
-    /// 禁用管理员账户。
+    /// Disable an administrator account.
     Deactivate { username: String },
 }
 
-/// 根据 CLI 参数路由到对应处理流程。
-/// 返回 `Ok(true)` 表示需要继续启动 Web Server；`Ok(false)` 表示子命令已处理完毕，调用方应直接退出。
-pub async fn dispatch(cli: Cli) -> anyhow::Result<bool> {
+#[derive(Debug, Default)]
+pub struct ServeOptions {
+    pub host: Option<IpAddr>,
+    pub port: Option<u16>,
+}
+
+/// Route CLI arguments to the matching handler.
+/// Returns `Ok(None)` when the process should exit after handling a subcommand.
+/// Returns `Ok(Some(options))` when the web server should start.
+pub async fn dispatch(cli: Cli) -> anyhow::Result<Option<ServeOptions>> {
     if cli.healthcheck {
         run_healthcheck().await?;
-        return Ok(false);
+        return Ok(None);
     }
     match cli.command {
-        None | Some(Command::Serve) => Ok(true),
+        None => Ok(Some(ServeOptions::default())),
+        Some(Command::Serve { host, port }) => Ok(Some(ServeOptions {
+            host: Some(host),
+            port,
+        })),
         Some(Command::Healthcheck) => {
             run_healthcheck().await?;
-            Ok(false)
+            Ok(None)
         }
         Some(Command::Version) => {
             run_version();
-            Ok(false)
+            Ok(None)
         }
         Some(Command::SchemaVersion) => {
             run_schema_version().await?;
-            Ok(false)
+            Ok(None)
         }
         Some(Command::Config { action }) => {
             run_config(action)?;
-            Ok(false)
+            Ok(None)
         }
         Some(Command::Admin { action }) => {
             run_admin(action).await?;
-            Ok(false)
+            Ok(None)
         }
     }
 }
@@ -143,7 +161,9 @@ async fn run_schema_version() -> anyhow::Result<()> {
         std::process::exit(2);
     }
     if status.needs_upgrade() {
-        println!("status: upgrade required — start `free-market` once to apply pending schema revisions");
+        println!(
+            "status: upgrade required — start `free-market` once to apply pending schema revisions"
+        );
         std::process::exit(1);
     }
     println!("status: up to date");
@@ -154,7 +174,6 @@ fn run_config(action: ConfigAction) -> anyhow::Result<()> {
     match action {
         ConfigAction::Show => {
             let mut cfg = AppConfig::load().context("load config")?;
-            // 脱敏：不打印 bootstrap_password 与 app_secret。
             if !cfg.admin.bootstrap_password.is_empty() {
                 cfg.admin.bootstrap_password = "***".to_string();
             }
@@ -176,7 +195,7 @@ fn run_config(action: ConfigAction) -> anyhow::Result<()> {
                     return Ok(());
                 }
             }
-            println!("未找到 config.toml，正在使用编译期默认值。");
+            println!("config.toml not found; using compiled-in defaults.");
         }
     }
     Ok(())
@@ -212,12 +231,12 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
             .fetch_all(pool)
             .await?;
             if rows.is_empty() {
-                println!("(暂无管理员，请先访问 /setup 完成首次安装)");
+                println!("(no administrators yet — visit /setup to finish first-time setup)");
                 return Ok(());
             }
             println!(
                 "{:>4}  {:<20}  {:<20}  {:<8}  {:<6}  {}",
-                "ID", "用户名", "显示名", "角色", "启用", "创建时间"
+                "ID", "USERNAME", "DISPLAY NAME", "ROLE", "ACTIVE", "CREATED AT"
             );
             for row in rows {
                 let id: i64 = row.try_get("id")?;
@@ -241,7 +260,7 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
             ensure_user_exists(pool, &username).await?;
             let pwd = match password {
                 Some(p) => validate_password(p)?,
-                None => prompt_password_twice("请输入新密码: ", "请再次确认: ")?,
+                None => prompt_password_twice("New password: ", "Confirm password: ")?,
             };
             let hash = password::hash_password(&pwd).context("hash password")?;
             let now = crate::time::now_str();
@@ -255,9 +274,9 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
             .await?
             .rows_affected();
             if affected == 0 {
-                bail!("未找到用户名 {username}");
+                bail!("user not found: {username}");
             }
-            println!("已重置 {username} 的密码。");
+            println!("password reset for {username}");
         }
         AdminAction::Create {
             username,
@@ -266,7 +285,7 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
             password,
         } => {
             if !["owner", "admin"].contains(&role.as_str()) {
-                bail!("role 仅支持 owner 或 admin");
+                bail!("role must be owner or admin");
             }
             let exists: Option<i64> =
                 sqlx::query_scalar("SELECT id FROM admins WHERE username = ?")
@@ -274,11 +293,11 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
                     .fetch_optional(pool)
                     .await?;
             if exists.is_some() {
-                bail!("用户名 {username} 已存在");
+                bail!("username already exists: {username}");
             }
             let pwd = match password {
                 Some(p) => validate_password(p)?,
-                None => prompt_password_twice("请输入密码: ", "请再次确认: ")?,
+                None => prompt_password_twice("Password: ", "Confirm password: ")?,
             };
             let hash = password::hash_password(&pwd).context("hash password")?;
             let now = crate::time::now_str();
@@ -295,7 +314,7 @@ async fn handle_admin(pool: &SqlitePool, action: AdminAction) -> anyhow::Result<
             .bind(&now)
             .execute(pool)
             .await?;
-            println!("已创建管理员 {username} ({role})。");
+            println!("created administrator {username} ({role})");
         }
         AdminAction::Activate { username } => set_active(pool, &username, 1).await?,
         AdminAction::Deactivate { username } => set_active(pool, &username, 0).await?,
@@ -309,7 +328,7 @@ async fn ensure_user_exists(pool: &SqlitePool, username: &str) -> anyhow::Result
         .fetch_optional(pool)
         .await?;
     if exists.is_none() {
-        bail!("未找到用户名 {username}");
+        bail!("user not found: {username}");
     }
     Ok(())
 }
@@ -325,11 +344,11 @@ async fn set_active(pool: &SqlitePool, username: &str, value: i64) -> anyhow::Re
             .await?
             .rows_affected();
     if affected == 0 {
-        bail!("未找到用户名 {username}");
+        bail!("user not found: {username}");
     }
     println!(
-        "已{}用户 {username}。",
-        if value == 1 { "启用" } else { "禁用" }
+        "{} user {username}",
+        if value == 1 { "activated" } else { "deactivated" }
     );
     Ok(())
 }
@@ -339,14 +358,14 @@ fn prompt_password_twice(prompt1: &str, prompt2: &str) -> anyhow::Result<String>
     let first = validate_password(first)?;
     let second = rpassword::prompt_password(prompt2).context("read password")?;
     if first != second {
-        bail!("两次输入的密码不一致");
+        bail!("passwords do not match");
     }
     Ok(first)
 }
 
 fn validate_password(pwd: String) -> anyhow::Result<String> {
     if pwd.len() < 8 {
-        bail!("密码长度需 ≥ 8");
+        bail!("password must be at least 8 characters");
     }
     std::io::stdout().flush().ok();
     Ok(pwd)

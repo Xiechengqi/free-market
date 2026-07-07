@@ -118,7 +118,7 @@ impl Default for AppConfig {
         Self {
             server: ServerConfig {
                 host: "0.0.0.0".parse().expect("valid ip"),
-                port: 8080,
+                port: 8899,
                 run_worker: true,
             },
             database: DatabaseConfig {
@@ -129,7 +129,7 @@ impl Default for AppConfig {
                 logo_text: "freeMarket".to_string(),
                 notice: "欢迎使用 freeMarket。".to_string(),
                 footer: String::new(),
-                base_url: "http://0.0.0.0:8080".to_string(),
+                base_url: "http://0.0.0.0:8899".to_string(),
                 theme: "luna".to_string(),
                 order_expire_minutes: 5,
                 keywords: String::new(),
